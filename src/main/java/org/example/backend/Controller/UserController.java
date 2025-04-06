@@ -3,6 +3,7 @@ package org.example.backend.Controller;
 import org.example.backend.Model.User;
 import org.example.backend.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,8 +22,8 @@ public class UserController {
     }
 
     @GetMapping("/getUsers")
-    public List<User> getUsers() {
-        return userService.findAll();
+    public ResponseEntity<List<User>> getUsers() {
+        return ResponseEntity.ok(userService.findAll());
     }
 
     @GetMapping("/public_resource")
