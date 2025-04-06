@@ -18,4 +18,8 @@ public class UserService {
     public List<User> findAll() {
         return userRepository.findAll();
     }
+
+//    public boolean login (String email, String password) {
+//        return false;
+//    }
 }

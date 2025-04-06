@@ -24,4 +24,7 @@ public class UserController {
     public List<User> getUsers() {
         return userService.findAll();
     }
+
+    @GetMapping("/public_resource")
+    public String getPublicResource() {return "You are accessing the Public Resource";}
 }

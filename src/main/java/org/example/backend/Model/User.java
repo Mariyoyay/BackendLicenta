@@ -1,7 +1,12 @@
 package org.example.backend.Model;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
+import java.sql.Date;
+import java.util.Set;
+
+@Data
 @Entity
 @Table(name = "users")
 public class User {
@@ -15,14 +20,13 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    public User() {}
+    private String firstName;
+    private String lastName;
 
-    public User(String email) {
-        this.email = email;
-    }
+    private Date dateOfBirth;
 
-    public Long getId() { return id; }
-    public String getEmail() { return email; }
+    private String phone;
 
-    public void setEmail(String email) { this.email = email; }
+    @ManyToMany(targetEntity = Role.class)
+    private Set<Role> roles;
 }
