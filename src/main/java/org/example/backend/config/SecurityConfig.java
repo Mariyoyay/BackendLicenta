@@ -1,10 +1,14 @@
 package org.example.backend.config;
 
-import org.example.backend.security.RestAuthenticationEntryPoint;
+import org.example.backend.filters.CustomAuthenticationFilter;
+import org.example.backend.filters.CustomAuthorizationFilter;
+import org.example.backend.service.JwtService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -21,34 +25,50 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAuthorizationFilter customAuthorizationFilter;
+    private final JwtService jwtService;
+    private final AuthenticationConfiguration authenticationConfiguration;
 
-    public SecurityConfig(
-            AuthenticationProvider authenticationProvider, JwtAuthenticationFilter jwtAuthenticationFilter
-    ) {
+    public SecurityConfig(AuthenticationProvider authenticationProvider,
+                          CustomAuthorizationFilter customAuthorizationFilter,
+                          JwtService jwtService,
+                          AuthenticationConfiguration authenticationConfiguration) {
         this.authenticationProvider = authenticationProvider;
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.customAuthorizationFilter = customAuthorizationFilter;
+        this.jwtService = jwtService;
+        this.authenticationConfiguration = authenticationConfiguration;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        CustomAuthenticationFilter customAuthenticationFilter =
+                new CustomAuthenticationFilter(authenticationManager(authenticationConfiguration), jwtService);
+        customAuthenticationFilter.setFilterProcessesUrl("/api/auth/login");
+
         http
                 .csrf(AbstractHttpConfigurer::disable) ///??
-//                .exceptionHandling(exception -> exception.authenticationEntryPoint(new RestAuthenticationEntryPoint()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/public_resource").permitAll()
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilter(customAuthenticationFilter)
+                .addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
+
+                ;
 
         return http.build();
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of("http://localhost:8080"));

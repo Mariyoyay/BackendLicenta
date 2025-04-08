@@ -1,13 +1,18 @@
-package org.example.backend.Service;
+package org.example.backend.service;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.example.backend.DTO.LoginRequestDTO;
 import org.example.backend.DTO.RegisterRequestDTO;
-import org.example.backend.Model.User;
-import org.example.backend.Repository.RoleRepository;
-import org.example.backend.Repository.UserRepository;
+import org.example.backend.model.User;
+import org.example.backend.repository.RoleRepository;
+import org.example.backend.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -54,4 +59,31 @@ public class AuthenticationService {
 
         return userRepository.findByEmail(loginRequestDTO.getEmail()).orElseThrow();
     }
+
+////    @Transactional for when we put refresh tokens
+//    public Boolean logout(HttpServletRequest request, HttpServletResponse response){
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//
+//        if(auth != null && auth.isAuthenticated()){
+//            new SecurityContextLogoutHandler().logout(request, response, auth);
+//
+////            String token = request.getHeader("Authorization");
+////            if(token != null && token.startsWith("Bearer ")){
+////                token = token.substring(7);
+////            } else {
+////                throw new RuntimeException("No refresh token");
+////            }
+////
+////            RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
+////                    .orElseThrow(() -> new RuntimeException("REFRESH_TOKEN_DOES_NOT_EXIST"));
+////
+////            refreshToken.setRefreshTokenStatus(RefreshTokenStatus.REVOKED);
+////
+////            refreshTokenRepository.save(refreshToken);
+//
+//            return true;
+//        } else {
+//            throw new RuntimeException("User not found");
+//        }
+//    }
 }
