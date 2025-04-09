@@ -51,4 +51,23 @@ public class AuthenticationController {
         response.setContentType(APPLICATION_JSON_VALUE);
         new ObjectMapper().writeValue(response.getOutputStream(), tokens);
     }
+
+    @PostMapping("/logout")
+    public void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String authorization = request.getHeader(AUTHORIZATION);
+        Map<String, Object> reply = authenticationService.logout(authorization);
+
+        if (reply.containsKey("error_message")){
+            String error_message = (String) reply.get("error_message");
+            response.setHeader("error", error_message);
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType(APPLICATION_JSON_VALUE);
+            new ObjectMapper().writeValue(response.getOutputStream(), reply);
+            return;
+        }
+
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType(APPLICATION_JSON_VALUE);
+        new ObjectMapper().writeValue(response.getOutputStream(), reply);
+    }
 }
