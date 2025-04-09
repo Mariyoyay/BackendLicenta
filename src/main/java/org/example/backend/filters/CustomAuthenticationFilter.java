@@ -51,8 +51,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         claims.put("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
         String access_token = jwtService.generateToken(claims, user);
         String refresh_token = jwtService.generateRefreshToken(user);
-//        response.setHeader("access_toke", access/_token);
-//        response.setHeader("refresh_token", refresh_token);
+
         Map<String, String> tokens = new HashMap<>();
         tokens.put("access_token", access_token);
         tokens.put("refresh_token", refresh_token);

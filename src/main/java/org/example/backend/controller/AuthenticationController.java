@@ -1,5 +1,6 @@
 package org.example.backend.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.backend.DTO.LoginRequestDTO;
@@ -12,16 +13,20 @@ import org.example.backend.service.JwtService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.util.Map;
+
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
-    private final JwtService jwtService;
 
     public AuthenticationController(AuthenticationService authenticationService, JwtService jwtService) {
         this.authenticationService = authenticationService;
-        this.jwtService = jwtService;
     }
 
     @PostMapping("/register")
@@ -30,25 +35,20 @@ public class AuthenticationController {
         return ResponseEntity.ok(registeredUser);
     }
 
-//    @PostMapping("/login")
-//    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequestDTO) {
-//        User logedinUser = authenticationService.login(loginRequestDTO);
-//
-//        String token = jwtService.generateToken(logedinUser);
-//
-//        LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
-//        loginResponseDTO.setToken(token);
-//        loginResponseDTO.setExpiresIn(jwtService.getExpirationTime());
-//
-//        return ResponseEntity.ok(loginResponseDTO);
-//    }
-//
-//    @PostMapping("/logout")
-//    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-//        System.out.println("aci?");
-//        LogoutResponseDTO logoutResponseDTO = new LogoutResponseDTO();
-//        logoutResponseDTO.setSuccess(authenticationService.logout(request, response));
-//
-//        return ResponseEntity.ok(logoutResponseDTO);
-//    }
+    @PostMapping("/refresh")
+    public void refresh(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String authorization = request.getHeader(AUTHORIZATION);
+        Map<String, String> tokens = authenticationService.refresh(authorization);
+        if (tokens.containsKey("error_message")){
+            String error_message = tokens.get("error_message");
+            response.setHeader("error", error_message);
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType(APPLICATION_JSON_VALUE);
+            new ObjectMapper().writeValue(response.getOutputStream(), tokens);
+            return;
+        }
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType(APPLICATION_JSON_VALUE);
+        new ObjectMapper().writeValue(response.getOutputStream(), tokens);
+    }
 }

@@ -1,40 +1,34 @@
 package org.example.backend.service;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.example.backend.DTO.LoginRequestDTO;
+import io.jsonwebtoken.Claims;
 import org.example.backend.DTO.RegisterRequestDTO;
+import org.example.backend.model.Role;
 import org.example.backend.model.User;
 import org.example.backend.repository.RoleRepository;
 import org.example.backend.repository.UserRepository;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public AuthenticationService(
             UserRepository userRepository,
             RoleRepository roleRepository,
-            AuthenticationManager authenticationManager,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder, JwtService jwtService
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
-        this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public User register(RegisterRequestDTO registerRequestDTO) {
@@ -49,41 +43,36 @@ public class AuthenticationService {
         return userRepository.save(user);
     }
 
-    public User login(LoginRequestDTO loginRequestDTO) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequestDTO.getEmail(),
-                        loginRequestDTO.getPassword()
-                )
-        );
+    public Map<String, String> refresh(String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")){
+            throw new RuntimeException("Refresh token is missing");
+        }
 
-        return userRepository.findByEmail(loginRequestDTO.getEmail()).orElseThrow();
+        try{
+            final String refresh_token = authorizationHeader.substring(7);
+            final Claims decodedToken = jwtService.extractAllClaims(refresh_token);
+            final String username = decodedToken.getSubject();
+
+            Optional<User> userOptional = userRepository.findByEmail(username);
+            if (userOptional.isEmpty()) throw new RuntimeException("User not found");
+            User user = userOptional.get();
+
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("roles", user.getRoles().stream().map(Role::getName).collect(Collectors.toList()));
+            String access_token = jwtService.generateToken(claims, user);
+
+            Map<String, String> tokens = new HashMap<>();
+            tokens.put("access_token", access_token);
+            tokens.put("refresh_token", refresh_token);
+
+            return tokens;
+        } catch (Exception e){
+            e.printStackTrace();
+
+            Map<String, String> error = new HashMap<>();
+            error.put("error_message", e.getMessage());
+
+            return error;
+        }
     }
-
-////    @Transactional for when we put refresh tokens
-//    public Boolean logout(HttpServletRequest request, HttpServletResponse response){
-//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-//
-//        if(auth != null && auth.isAuthenticated()){
-//            new SecurityContextLogoutHandler().logout(request, response, auth);
-//
-////            String token = request.getHeader("Authorization");
-////            if(token != null && token.startsWith("Bearer ")){
-////                token = token.substring(7);
-////            } else {
-////                throw new RuntimeException("No refresh token");
-////            }
-////
-////            RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
-////                    .orElseThrow(() -> new RuntimeException("REFRESH_TOKEN_DOES_NOT_EXIST"));
-////
-////            refreshToken.setRefreshTokenStatus(RefreshTokenStatus.REVOKED);
-////
-////            refreshTokenRepository.save(refreshToken);
-//
-//            return true;
-//        } else {
-//            throw new RuntimeException("User not found");
-//        }
-//    }
 }
