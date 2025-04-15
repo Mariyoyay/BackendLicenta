@@ -32,7 +32,7 @@ public class ApplicationConfiguration {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(10);
     }
 
     @Bean
@@ -42,16 +42,4 @@ public class ApplicationConfiguration {
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
         return daoAuthenticationProvider;
     }
-
-//    @Bean
-//    LogoutHandler logoutHandler() {
-//        return new SecurityContextLogoutHandler();
-//    }
-//
-//    @Bean
-//    SimpleUrlLogoutSuccessHandler logoutSuccessHandler() {
-//        SimpleUrlLogoutSuccessHandler logoutSuccessHandler = new SimpleUrlLogoutSuccessHandler();
-////        logoutSuccessHandler.setDefaultTargetUrl("/api/auth/login?logout");
-//        return logoutSuccessHandler;
-//    }
 }

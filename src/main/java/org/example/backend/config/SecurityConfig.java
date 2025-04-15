@@ -2,7 +2,9 @@ package org.example.backend.config;
 
 import org.example.backend.filters.CustomAuthenticationFilter;
 import org.example.backend.filters.CustomAuthorizationFilter;
+import org.example.backend.repository.RefreshTokenRepository;
 import org.example.backend.service.JwtService;
+import org.example.backend.service.RefreshTokenService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,22 +29,25 @@ public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final CustomAuthorizationFilter customAuthorizationFilter;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
     private final AuthenticationConfiguration authenticationConfiguration;
 
     public SecurityConfig(AuthenticationProvider authenticationProvider,
                           CustomAuthorizationFilter customAuthorizationFilter,
-                          JwtService jwtService,
+                          JwtService jwtService, RefreshTokenService refreshTokenService,
                           AuthenticationConfiguration authenticationConfiguration) {
         this.authenticationProvider = authenticationProvider;
         this.customAuthorizationFilter = customAuthorizationFilter;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
         this.authenticationConfiguration = authenticationConfiguration;
+
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         CustomAuthenticationFilter customAuthenticationFilter =
-                new CustomAuthenticationFilter(authenticationManager(authenticationConfiguration), jwtService);
+                new CustomAuthenticationFilter(authenticationManager(authenticationConfiguration), jwtService, refreshTokenService);
         customAuthenticationFilter.setFilterProcessesUrl("/api/auth/login");
 
         http

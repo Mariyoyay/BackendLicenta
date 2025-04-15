@@ -2,10 +2,10 @@ package org.example.backend.service;
 
 import io.jsonwebtoken.Claims;
 import org.example.backend.DTO.RegisterRequestDTO;
-import org.example.backend.model.BlacklistedRefreshToken;
+import org.example.backend.model.RefreshToken;
 import org.example.backend.model.Role;
 import org.example.backend.model.User;
-import org.example.backend.repository.BlacklistedRefreshTokenRepository;
+import org.example.backend.repository.RefreshTokenRepository;
 import org.example.backend.repository.RoleRepository;
 import org.example.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,18 +21,18 @@ public class AuthenticationService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final BlacklistedRefreshTokenRepository blacklistedRefreshTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public AuthenticationService(
             UserRepository userRepository,
             RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder, JwtService jwtService, BlacklistedRefreshTokenRepository blacklistedRefreshTokenRepository
+            PasswordEncoder passwordEncoder, JwtService jwtService, RefreshTokenRepository refreshTokenRepository
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
-        this.blacklistedRefreshTokenRepository = blacklistedRefreshTokenRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     public User register(RegisterRequestDTO registerRequestDTO) {
@@ -55,11 +55,14 @@ public class AuthenticationService {
         final String refresh_token = authorizationHeader.substring(7);
 
         // checking if blacklisted
-        Optional<BlacklistedRefreshToken> token = blacklistedRefreshTokenRepository.findByRefreshToken(refresh_token);
-        if (token.isPresent()) {
-            throw new RuntimeException("Refresh token blacklisted");
+        Optional<RefreshToken> token = refreshTokenRepository.findByRefreshToken(refresh_token);
+        if (!token.isPresent()) {
+            throw new RuntimeException("Refresh token not found");
         }
-
+        RefreshToken refreshToken = token.get();
+        if (refreshToken.getIsBlacklisted()){
+            throw new RuntimeException("Refresh token is blacklisted");
+        }
 
         try{
             final Claims decodedToken = jwtService.extractAllClaims(refresh_token);
@@ -96,25 +99,30 @@ public class AuthenticationService {
         final String refresh_token = authorizationHeader.substring(7);
 
         // checking if already blacklisted
-        Optional<BlacklistedRefreshToken> token = blacklistedRefreshTokenRepository.findByRefreshToken(refresh_token);
-        if (token.isPresent()) {
-            throw new RuntimeException("Refresh token already blacklisted");
+        Optional<RefreshToken> token = refreshTokenRepository.findByRefreshToken(refresh_token);
+        if (!token.isPresent()) {
+            throw new RuntimeException("Refresh token not saved in repository");
         }
+
+        RefreshToken refreshToken = token.get();
+        if (refreshToken.getIsBlacklisted()){
+            throw new RuntimeException("Refresh token is already blacklisted");
+        }
+
 
         Map<String, Object> reply = new HashMap<>();
 
-        BlacklistedRefreshToken blacklistedRefreshToken = new BlacklistedRefreshToken();
-        blacklistedRefreshToken.setRefreshToken(refresh_token);
 
         try {
-            final Date expiry_date = jwtService.extractClaim(refresh_token, Claims::getExpiration);
             if (jwtService.isTokenExpired(refresh_token)) {
                 reply.put("success", true);
                 reply.put("logout", "Token was already expired");
                 return reply;
             }
-            blacklistedRefreshToken.setExpiryDate(new java.sql.Date(expiry_date.getTime()));
-            blacklistedRefreshTokenRepository.save(blacklistedRefreshToken);
+            Optional<User> userOptional = userRepository.findByEmail(jwtService.extractUsername(refresh_token));
+            if (userOptional.isEmpty()) throw new RuntimeException("User not found");
+            refreshTokenRepository.invalidateAllByUser(userOptional.get());
+
             reply.put("success", true);
             reply.put("logout", "Token successfully revoked");
             return reply;
