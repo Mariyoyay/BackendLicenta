@@ -1,13 +1,13 @@
 package org.example.backend.controller;
 
+import org.example.backend.model.Role;
 import org.example.backend.model.User;
 import org.example.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/users")
@@ -26,4 +26,26 @@ public class UserController {
 
     @GetMapping("/public_resource")
     public String getPublicResource() {return "You are accessing the Public Resource";}
+
+    @PostMapping("/{username}/addRoles")
+    public ResponseEntity<?> addRolesToUser(@PathVariable("username") String email, @RequestBody List<String> roles) {
+        if (roles.isEmpty()) {
+            return ResponseEntity.ok("No roles needed to be added");
+        }
+
+        User savedUser = userService.addRolesToUser(email, roles);
+
+        return ResponseEntity.ok(savedUser);
+    }
+
+    @DeleteMapping("/{username}/removeRoles")
+    public ResponseEntity<?> removeRolesFromUser(@PathVariable("username") String email, @RequestBody List<String> roles) {
+        if (roles.isEmpty()) {
+            return ResponseEntity.ok("No roles needed to be deleted");
+        }
+
+        User savedUser = userService.deleteRolesFromUser(email, roles);
+
+        return ResponseEntity.ok(savedUser);
+    }
 }
