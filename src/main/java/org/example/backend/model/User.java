@@ -67,4 +67,9 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+
+    public Set<String> getRolesAsString() {
+        return roles.stream().map(Role::getName).collect(Collectors.toSet());
+    }
 }

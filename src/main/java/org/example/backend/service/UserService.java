@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.example.backend.utils.RoleNames.ROLE_PATIENT;
+
 @Service
 public class UserService {
 
@@ -47,7 +49,7 @@ public class UserService {
         } else throw new RuntimeException("Invalid email. User doesn't exist");
 
         user.setRoles(user.getRoles().stream().filter(role ->
-            role.getName().equals("ROLE_PATIENT") || !roles.contains(role.getName())
+            role.getName().equals(ROLE_PATIENT) || !roles.contains(role.getName())
         ).collect(Collectors.toSet()));
 
         return userRepository.save(user);

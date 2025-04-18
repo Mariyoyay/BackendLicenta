@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.example.backend.utils.RoleNames.ROLE_PATIENT;
+
 @Service
 public class AuthenticationService {
 
@@ -43,7 +45,7 @@ public class AuthenticationService {
         user.setLastName(registerRequestDTO.getLastName());
         user.setDateOfBirth(registerRequestDTO.getDateOfBirth());
         user.setPhone(registerRequestDTO.getPhone());
-        user.setRoles(Set.of(roleRepository.findByName("ROLE_PATIENT").get()));
+        user.setRoles(Set.of(roleRepository.findByName(ROLE_PATIENT).get()));
         return userRepository.save(user);
     }
 

@@ -2,7 +2,6 @@ package org.example.backend.config;
 
 import org.example.backend.filters.CustomAuthenticationFilter;
 import org.example.backend.filters.CustomAuthorizationFilter;
-import org.example.backend.repository.RefreshTokenRepository;
 import org.example.backend.service.JwtService;
 import org.example.backend.service.RefreshTokenService;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +21,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+
+import static org.example.backend.utils.RoleNames.*;
 
 @Configuration
 @EnableWebSecurity
@@ -55,8 +56,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/users/{username}/addRoles").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/api/users/{username}/removeRoles").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/users/{username}/addRoles").hasAuthority(ROLE_ADMIN)
+                        .requestMatchers("/api/users/{username}/removeRoles").hasAuthority(ROLE_ADMIN)
+                        .requestMatchers("/api/time_slots/addAppointment").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
                         .requestMatchers(HttpMethod.GET, "/api/users/public_resource").permitAll()
                         .anyRequest().authenticated()
                 )

@@ -27,6 +27,9 @@ public class UserController {
     @GetMapping("/public_resource")
     public String getPublicResource() {return "You are accessing the Public Resource";}
 
+
+    // ADMIN SPECIFIC ACTIONS
+
     @PostMapping("/{username}/addRoles")
     public ResponseEntity<?> addRolesToUser(@PathVariable("username") String email, @RequestBody List<String> roles) {
         if (roles.isEmpty()) {
