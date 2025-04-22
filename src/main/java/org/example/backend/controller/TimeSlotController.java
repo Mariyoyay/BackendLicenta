@@ -2,8 +2,6 @@ package org.example.backend.controller;
 
 import org.example.backend.DTO.AppointmentDTO;
 import org.example.backend.model.Appointment;
-import org.example.backend.model.TimeSlot;
-import org.example.backend.model.User;
 import org.example.backend.service.TimeSlotService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

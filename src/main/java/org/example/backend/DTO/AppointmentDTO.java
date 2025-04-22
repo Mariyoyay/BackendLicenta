@@ -1,7 +1,6 @@
 package org.example.backend.DTO;
 
 import lombok.Data;
-import org.example.backend.model.User;
 
 import java.util.Date;
 

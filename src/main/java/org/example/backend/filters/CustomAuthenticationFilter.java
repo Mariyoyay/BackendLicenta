@@ -1,16 +1,12 @@
 package org.example.backend.filters;
 
-import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwt;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.example.backend.model.RefreshToken;
 import org.example.backend.model.User;
-import org.example.backend.repository.RefreshTokenRepository;
 import org.example.backend.service.JwtService;
 import org.example.backend.service.RefreshTokenService;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,7 +15,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.Date;

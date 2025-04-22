@@ -3,7 +3,6 @@ package org.example.backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.sql.Time;
 import java.time.LocalDateTime;
 
 

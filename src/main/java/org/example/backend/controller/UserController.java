@@ -1,13 +1,11 @@
 package org.example.backend.controller;
 
-import org.example.backend.model.Role;
 import org.example.backend.model.User;
 import org.example.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/users")
