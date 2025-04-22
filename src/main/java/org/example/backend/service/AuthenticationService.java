@@ -10,6 +10,7 @@ import org.example.backend.repository.RoleRepository;
 import org.example.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,6 +38,7 @@ public class AuthenticationService {
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
+    @Transactional
     public User register(RegisterRequestDTO registerRequestDTO) {
         User user = new User();
         user.setEmail(registerRequestDTO.getEmail());
@@ -49,6 +51,7 @@ public class AuthenticationService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public Map<String, String> refresh(String authorizationHeader) {
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")){
             throw new RuntimeException("Refresh token is missing");
@@ -93,6 +96,7 @@ public class AuthenticationService {
         }
     }
 
+    @Transactional
     public Map<String, Object> logout(String authorizationHeader) {
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")){
             throw new RuntimeException("Refresh token is missing");

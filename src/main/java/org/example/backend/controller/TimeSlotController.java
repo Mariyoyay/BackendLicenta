@@ -6,10 +6,7 @@ import org.example.backend.service.TimeSlotService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/time_slots")
@@ -38,6 +35,23 @@ public class TimeSlotController {
         return ResponseEntity.badRequest().body("No authentication found");
     }
 
+    @PostMapping("/makeAppointment")
+    public ResponseEntity<?> makeAppointment(@RequestBody AppointmentDTO appointmentDTO) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+
+            String patientEmail = (String) authentication.getPrincipal();
+
+            Appointment addedAppointment = timeSlotService.makeAppointment(appointmentDTO, patientEmail);
+
+            return ResponseEntity.ok(addedAppointment);
+        }
+
+        return ResponseEntity.badRequest().body("No authentication found");
+    }
+
     @PostMapping("/updateAppointment")
     public ResponseEntity<?> updateAppointment(@RequestBody AppointmentDTO appointmentDTO) {
 
@@ -54,4 +68,23 @@ public class TimeSlotController {
 
         return ResponseEntity.badRequest().body("No authentication found");
     }
+
+    @PostMapping("/cancelAppointment")
+    public ResponseEntity<?> cancelAppointment(@RequestBody AppointmentDTO appointmentDTO) {
+
+        Long appointmentId = appointmentDTO.getId();
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            String editorEmail = (String) authentication.getPrincipal();
+
+            Appointment canceledAppointment = timeSlotService.cancelAppointment(appointmentId, editorEmail);
+
+            return ResponseEntity.ok(canceledAppointment);
+        }
+
+        return ResponseEntity.badRequest().body("No authentication found");
+    }
 }
+

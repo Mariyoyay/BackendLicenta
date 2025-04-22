@@ -59,6 +59,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/{username}/addRoles").hasAuthority(ROLE_ADMIN)
                         .requestMatchers("/api/users/{username}/removeRoles").hasAuthority(ROLE_ADMIN)
                         .requestMatchers("/api/time_slots/addAppointment").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
+                        .requestMatchers("/api/time_slots/updateAppointment").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
+                        .requestMatchers("/api/time_slots/makeAppointment").hasAuthority(ROLE_PATIENT)
                         .requestMatchers(HttpMethod.GET, "/api/users/public_resource").permitAll()
                         .anyRequest().authenticated()
                 )

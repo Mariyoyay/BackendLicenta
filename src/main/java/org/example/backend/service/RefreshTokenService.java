@@ -23,12 +23,6 @@ public class RefreshTokenService {
         refreshTokenRepository.deleteExpiredTokens(new java.sql.Date(yesterday.getTime()));
     }
 
-
-    // is useless I think
-    public void blacklistRefreshTokensByUser(User user) {
-        refreshTokenRepository.invalidateAllByUser(user);
-    }
-
     public void addNewRefreshToken(String refreshToken, Date expirationDate, User user) {
         RefreshToken newRefreshToken = new RefreshToken();
         newRefreshToken.setRefreshToken(refreshToken);
