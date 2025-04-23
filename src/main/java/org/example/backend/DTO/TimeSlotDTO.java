@@ -6,7 +6,7 @@ import java.util.Date;
 
 
 @Data
-public class AppointmentDTO {
+public class TimeSlotDTO {
     private Long id;
     private String description;
     private Date startTime;

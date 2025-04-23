@@ -1,7 +1,8 @@
 package org.example.backend.service;
 
-import org.example.backend.DTO.AppointmentDTO;
+import org.example.backend.DTO.TimeSlotDTO;
 import org.example.backend.model.Appointment;
+import org.example.backend.model.OccupiedTimeSlot;
 import org.example.backend.model.User;
 import org.example.backend.repository.AppointmentRepository;
 import org.example.backend.repository.OccupiedTimeSlotRepository;
@@ -12,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -32,7 +32,7 @@ public class TimeSlotService {
     }
 
     @Transactional
-    public Appointment addAppointment(AppointmentDTO appointmentDTO, String editorEmail) {
+    public Appointment addAppointment(TimeSlotDTO appointmentDTO, String editorEmail) {
         Appointment newAppointment = new Appointment();
         newAppointment.setDescription(appointmentDTO.getDescription());
         newAppointment.setStartTime(appointmentDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
@@ -68,7 +68,7 @@ public class TimeSlotService {
     }
 
     @Transactional
-    public Appointment updateAppointment(AppointmentDTO appointmentDTO, String editorEmail) {
+    public Appointment updateAppointment(TimeSlotDTO appointmentDTO, String editorEmail) {
         Optional<Appointment> appointmentOptional = appointmentRepository.findById(appointmentDTO.getId());
         if (appointmentOptional.isEmpty()) throw new RuntimeException("Invalid appointment id");
         Appointment appointment = appointmentOptional.get();
@@ -144,7 +144,7 @@ public class TimeSlotService {
     }
 
     @Transactional
-    public Appointment makeAppointment(AppointmentDTO appointmentDTO, String patientEmail) {
+    public Appointment makeAppointment(TimeSlotDTO appointmentDTO, String patientEmail) {
         Appointment newAppointment = new Appointment();
         newAppointment.setDescription(appointmentDTO.getDescription());
         newAppointment.setStartTime(appointmentDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
@@ -170,5 +170,55 @@ public class TimeSlotService {
         newAppointment.setLastEditTime(LocalDateTime.now());
 
         return appointmentRepository.save(newAppointment);
+    }
+
+    @Transactional
+    public OccupiedTimeSlot addOccupiedTimeSlot(TimeSlotDTO occupiedTimeSlotDTO, String doctorEmail) {
+        OccupiedTimeSlot occupiedTimeSlot = new OccupiedTimeSlot();
+        if (occupiedTimeSlotDTO.getDescription() != null)
+            occupiedTimeSlot.setDescription(occupiedTimeSlotDTO.getDescription());
+        occupiedTimeSlot.setStartTime(occupiedTimeSlotDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
+        occupiedTimeSlot.setDurationMinutes(occupiedTimeSlotDTO.getDurationMinutes());
+
+        User doctor;
+        if (userRepository.existsByEmail(doctorEmail)) {
+            doctor = userRepository.findByEmail(doctorEmail).get();
+        } else throw new RuntimeException("Invalid email. User doesn't exist");
+
+        occupiedTimeSlot.setDoctor(doctor);
+
+        return occupiedTimeSlotRepository.save(occupiedTimeSlot);
+    }
+
+    @Transactional
+    public OccupiedTimeSlot updateOccupiedTimeSlot(TimeSlotDTO occupiedTimeSlotDTO, String doctorEmail) {
+        Optional<OccupiedTimeSlot> optionalOccupiedTimeSlot = occupiedTimeSlotRepository.findById(occupiedTimeSlotDTO.getId());
+        if (optionalOccupiedTimeSlot.isEmpty()) throw new RuntimeException("Invalid occupied time slot id");
+        OccupiedTimeSlot occupiedTimeSlot = optionalOccupiedTimeSlot.get();
+
+        if (!Objects.equals(occupiedTimeSlot.getDoctor().getEmail(), doctorEmail))
+            throw new RuntimeException("TimeSlot doesn't belong to this Doctor");
+
+        if (occupiedTimeSlotDTO.getDescription() != null)
+            occupiedTimeSlot.setDescription(occupiedTimeSlotDTO.getDescription());
+        if (occupiedTimeSlotDTO.getStartTime() != null)
+            occupiedTimeSlot.setStartTime(occupiedTimeSlotDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
+        if (occupiedTimeSlotDTO.getDurationMinutes() != null)
+            occupiedTimeSlot.setDurationMinutes(occupiedTimeSlotDTO.getDurationMinutes());
+
+        return occupiedTimeSlotRepository.save(occupiedTimeSlot);
+    }
+
+    @Transactional
+    public OccupiedTimeSlot deleteOccupiedTimeSlot(Long occupiedTimeSlotId, String doctorEmail) {
+        Optional<OccupiedTimeSlot> optionalOccupiedTimeSlot = occupiedTimeSlotRepository.findById(occupiedTimeSlotId);
+        if (optionalOccupiedTimeSlot.isEmpty()) throw new RuntimeException("Invalid occupied time slot id");
+        OccupiedTimeSlot occupiedTimeSlot = optionalOccupiedTimeSlot.get();
+
+        if (!Objects.equals(occupiedTimeSlot.getDoctor().getEmail(), doctorEmail))
+            throw new RuntimeException("TimeSlot doesn't belong to this Doctor");
+
+       occupiedTimeSlotRepository.delete(occupiedTimeSlot);
+       return occupiedTimeSlot;
     }
 }

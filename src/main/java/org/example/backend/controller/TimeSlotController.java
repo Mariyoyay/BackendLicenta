@@ -1,7 +1,8 @@
 package org.example.backend.controller;
 
-import org.example.backend.DTO.AppointmentDTO;
+import org.example.backend.DTO.TimeSlotDTO;
 import org.example.backend.model.Appointment;
+import org.example.backend.model.OccupiedTimeSlot;
 import org.example.backend.service.TimeSlotService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -19,7 +20,7 @@ public class TimeSlotController {
     }
 
     @PostMapping("/addAppointment")
-    public ResponseEntity<?> addAppointment(@RequestBody AppointmentDTO appointmentDTO) {
+    public ResponseEntity<?> addAppointment(@RequestBody TimeSlotDTO appointmentDTO) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -36,7 +37,7 @@ public class TimeSlotController {
     }
 
     @PostMapping("/makeAppointment")
-    public ResponseEntity<?> makeAppointment(@RequestBody AppointmentDTO appointmentDTO) {
+    public ResponseEntity<?> makeAppointment(@RequestBody TimeSlotDTO appointmentDTO) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -53,7 +54,7 @@ public class TimeSlotController {
     }
 
     @PostMapping("/updateAppointment")
-    public ResponseEntity<?> updateAppointment(@RequestBody AppointmentDTO appointmentDTO) {
+    public ResponseEntity<?> updateAppointment(@RequestBody TimeSlotDTO appointmentDTO) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -70,7 +71,7 @@ public class TimeSlotController {
     }
 
     @PostMapping("/cancelAppointment")
-    public ResponseEntity<?> cancelAppointment(@RequestBody AppointmentDTO appointmentDTO) {
+    public ResponseEntity<?> cancelAppointment(@RequestBody TimeSlotDTO appointmentDTO) {
 
         Long appointmentId = appointmentDTO.getId();
 
@@ -82,6 +83,53 @@ public class TimeSlotController {
             Appointment canceledAppointment = timeSlotService.cancelAppointment(appointmentId, editorEmail);
 
             return ResponseEntity.ok(canceledAppointment);
+        }
+
+        return ResponseEntity.badRequest().body("No authentication found");
+    }
+
+    @PostMapping("/occupied/add")
+    public ResponseEntity<?> addOccupiedTimeSlot(@RequestBody TimeSlotDTO occupiedTimeSlotDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            String doctorEmail = (String) authentication.getPrincipal();
+
+            OccupiedTimeSlot occupiedTimeSlot = timeSlotService.addOccupiedTimeSlot(occupiedTimeSlotDTO, doctorEmail);
+
+            return ResponseEntity.ok(occupiedTimeSlot);
+        }
+
+        return ResponseEntity.badRequest().body("No authentication found");
+    }
+
+    @PostMapping("/occupied/update")
+    public ResponseEntity<?> updateOccupiedTimeSlot(@RequestBody TimeSlotDTO occupiedTimeSlotDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            String doctorEmail = (String) authentication.getPrincipal();
+
+            OccupiedTimeSlot occupiedTimeSlot = timeSlotService.updateOccupiedTimeSlot(occupiedTimeSlotDTO, doctorEmail);
+
+            return ResponseEntity.ok(occupiedTimeSlot);
+        }
+
+        return ResponseEntity.badRequest().body("No authentication found");
+    }
+
+    @DeleteMapping("/occupied/delete")
+    public ResponseEntity<?> deleteOccupiedTimeSlot(@RequestBody TimeSlotDTO occupiedTimeSlotDTO) {
+        Long occupiedTimeSlotId = occupiedTimeSlotDTO.getId();
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            String doctorEmail = (String) authentication.getPrincipal();
+
+            OccupiedTimeSlot occupiedTimeSlot = timeSlotService.deleteOccupiedTimeSlot(occupiedTimeSlotId, doctorEmail);
+
+            return ResponseEntity.ok(occupiedTimeSlot);
         }
 
         return ResponseEntity.badRequest().body("No authentication found");

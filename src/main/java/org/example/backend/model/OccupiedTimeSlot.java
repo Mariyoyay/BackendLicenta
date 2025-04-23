@@ -2,19 +2,21 @@ package org.example.backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 
 @Data
 @Entity
-@Table(name = "occupied_time_solts")
+@Table(name = "occupied_time_slots")
 public class OccupiedTimeSlot implements TimeSlot {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Getter
     private String description = "Occupied";
 
     private LocalDateTime startTime;
