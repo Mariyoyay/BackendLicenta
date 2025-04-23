@@ -56,12 +56,15 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/users/{username}/addRoles").hasAuthority(ROLE_ADMIN)
-                        .requestMatchers("/api/users/{username}/removeRoles").hasAuthority(ROLE_ADMIN)
-                        .requestMatchers("/api/time_slots/addAppointment").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
-                        .requestMatchers("/api/time_slots/updateAppointment").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
-                        .requestMatchers("/api/time_slots/makeAppointment").hasAuthority(ROLE_PATIENT)
+
+                        .requestMatchers("/api/users/manage/add").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
+                        .requestMatchers("/api/users/roles/manage/**").hasAuthority(ROLE_ADMIN)
+
+                        .requestMatchers("/api/time_slots/appointment/schedule").hasAuthority(ROLE_PATIENT)
+                        .requestMatchers("/api/time_slots/appointments/manage/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
                         .requestMatchers("/api/time_slots/occupied/**").hasAuthority(ROLE_DOCTOR)
+                        .requestMatchers("/api/time_slots/daySchedule/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
+
                         .requestMatchers(HttpMethod.GET, "/api/users/public_resource").permitAll()
                         .anyRequest().authenticated()
                 )

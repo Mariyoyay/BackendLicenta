@@ -3,6 +3,7 @@ package org.example.backend.service;
 import org.example.backend.DTO.TimeSlotDTO;
 import org.example.backend.model.Appointment;
 import org.example.backend.model.OccupiedTimeSlot;
+import org.example.backend.model.TimeSlot;
 import org.example.backend.model.User;
 import org.example.backend.repository.AppointmentRepository;
 import org.example.backend.repository.OccupiedTimeSlotRepository;
@@ -11,10 +12,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static org.example.backend.utils.RoleNames.*;
 
@@ -144,7 +145,7 @@ public class TimeSlotService {
     }
 
     @Transactional
-    public Appointment makeAppointment(TimeSlotDTO appointmentDTO, String patientEmail) {
+    public Appointment scheduleAppointment(TimeSlotDTO appointmentDTO, String patientEmail) {
         Appointment newAppointment = new Appointment();
         newAppointment.setDescription(appointmentDTO.getDescription());
         newAppointment.setStartTime(appointmentDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
@@ -220,5 +221,24 @@ public class TimeSlotService {
 
        occupiedTimeSlotRepository.delete(occupiedTimeSlot);
        return occupiedTimeSlot;
+    }
+
+    @Transactional
+    public List<TimeSlot> getDayActivities(String doctorEmail, Date date) {
+        User doctor;
+        if (userRepository.existsByEmail(doctorEmail)) {
+            doctor = userRepository.findByEmail(doctorEmail).get();
+        } else throw new RuntimeException("Invalid email. Doctor doesn't exist");
+
+        LocalDate dateAsLocalDate = date.toInstant().atZone(ZoneId.of("UTC")).toLocalDate();
+        LocalDateTime startTime = dateAsLocalDate.atStartOfDay();
+        LocalDateTime endTime = dateAsLocalDate.atTime(23, 59, 59);
+
+        List<TimeSlot> activities = new ArrayList<>();
+
+        activities.addAll(appointmentRepository.findAllByDoctorAndStartTimeBetween(doctor, startTime,endTime));
+        activities.addAll(occupiedTimeSlotRepository.findAllByDoctorAndStartTimeBetween(doctor, startTime,endTime));
+
+        return activities;
     }
 }

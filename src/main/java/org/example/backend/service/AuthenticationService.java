@@ -8,6 +8,7 @@ import org.example.backend.model.User;
 import org.example.backend.repository.RefreshTokenRepository;
 import org.example.backend.repository.RoleRepository;
 import org.example.backend.repository.UserRepository;
+import org.example.backend.utils.PasswordGenerator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,21 @@ public class AuthenticationService {
         User user = new User();
         user.setEmail(registerRequestDTO.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequestDTO.getPassword()));
+        user.setFirstName(registerRequestDTO.getFirstName());
+        user.setLastName(registerRequestDTO.getLastName());
+        user.setDateOfBirth(registerRequestDTO.getDateOfBirth());
+        user.setPhone(registerRequestDTO.getPhone());
+        user.setRoles(Set.of(roleRepository.findByName(ROLE_PATIENT).get()));
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public User registerByEmployee(RegisterRequestDTO registerRequestDTO) {
+        User user = new User();
+        user.setEmail(registerRequestDTO.getEmail());
+        String password = PasswordGenerator.generatePassword();
+        // SEND THIS OVER EMAIL TO THE USER
+        user.setPassword(passwordEncoder.encode(password));
         user.setFirstName(registerRequestDTO.getFirstName());
         user.setLastName(registerRequestDTO.getLastName());
         user.setDateOfBirth(registerRequestDTO.getDateOfBirth());
