@@ -68,13 +68,11 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public Map<String, String> refresh(String authorizationHeader) {
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")){
+    public Map<String, String> refresh(String refresh_token) {
+        if (refresh_token == null){
             throw new RuntimeException("Refresh token is missing");
         }
-
-        final String refresh_token = authorizationHeader.substring(7);
-
+        
         // checking if blacklisted
         Optional<RefreshToken> token = refreshTokenRepository.findByRefreshToken(refresh_token);
         if (!token.isPresent()) {
@@ -113,18 +111,18 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public Map<String, Object> logout(String authorizationHeader) {
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")){
+    public Map<String, Object> logout(String refresh_token) {
+        if (refresh_token == null){
             throw new RuntimeException("Refresh token is missing");
         }
 
-        final String refresh_token = authorizationHeader.substring(7);
 
         // checking if already blacklisted
         Optional<RefreshToken> token = refreshTokenRepository.findByRefreshToken(refresh_token);
         if (!token.isPresent()) {
             throw new RuntimeException("Refresh token not saved in repository");
         }
+
 
         RefreshToken refreshToken = token.get();
         if (refreshToken.getIsBlacklisted()){
@@ -136,11 +134,6 @@ public class AuthenticationService {
 
 
         try {
-            if (jwtService.isTokenExpired(refresh_token)) {
-                reply.put("success", true);
-                reply.put("logout", "Token was already expired");
-                return reply;
-            }
             Optional<User> userOptional = userRepository.findByEmail(jwtService.extractUsername(refresh_token));
             if (userOptional.isEmpty()) throw new RuntimeException("User not found");
             refreshTokenRepository.invalidateAllByUser(userOptional.get());

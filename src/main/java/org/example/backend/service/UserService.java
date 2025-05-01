@@ -54,4 +54,14 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
+    @Transactional
+    public User getUserByEmail(String userEmail) {
+        User user ;
+        if (userRepository.existsByEmail(userEmail)) {
+            user = userRepository.findByEmail(userEmail).get();
+        } else throw new RuntimeException("Invalid email. User doesn't exist");
+
+        return user;
+    }
 }

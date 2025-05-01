@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.backend.model.User;
@@ -57,9 +58,15 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         Date expiry_date = jwtService.extractClaim(refresh_token, Claims::getExpiration);
         refreshTokenService.addNewRefreshToken(refresh_token, expiry_date, user);
 
+        Cookie refreshTokenCookie = new Cookie("refresh_token", refresh_token);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setMaxAge((int) ((expiry_date.getTime() - System.currentTimeMillis())/1000)); //Time in seconds
+//        refreshTokenCookie.setSecure(true);
+        response.addCookie(refreshTokenCookie);
+
         Map<String, String> tokens = new HashMap<>();
         tokens.put("access_token", access_token);
-        tokens.put("refresh_token", refresh_token);
         response.setContentType(APPLICATION_JSON_VALUE);
         new ObjectMapper().writeValue(response.getOutputStream(), tokens);
     }

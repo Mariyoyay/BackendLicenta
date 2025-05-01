@@ -5,6 +5,8 @@ import org.example.backend.model.User;
 import org.example.backend.service.AuthenticationService;
 import org.example.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +26,21 @@ public class UserController {
     @GetMapping("/getUsers")
     public ResponseEntity<List<User>> getUsers() {
         return ResponseEntity.ok(userService.findAll());
+    }
+
+    @GetMapping("/myself")
+    public ResponseEntity<?> getMyself() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            String userEmail = (String) authentication.getPrincipal();
+
+            User user = userService.getUserByEmail(userEmail);
+
+            return ResponseEntity.ok(user);
+        }
+
+        return ResponseEntity.badRequest().body("No authentication found");
     }
 
     @GetMapping("/public_resource")
