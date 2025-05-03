@@ -62,6 +62,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setMaxAge((int) ((expiry_date.getTime() - System.currentTimeMillis())/1000)); //Time in seconds
+//        refreshTokenCookie.setAttribute("SameSite", "None ");
 //        refreshTokenCookie.setSecure(true);
         response.addCookie(refreshTokenCookie);
 

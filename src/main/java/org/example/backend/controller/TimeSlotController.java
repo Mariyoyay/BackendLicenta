@@ -5,12 +5,14 @@ import org.example.backend.model.Appointment;
 import org.example.backend.model.OccupiedTimeSlot;
 import org.example.backend.model.TimeSlot;
 import org.example.backend.service.TimeSlotService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
@@ -141,8 +143,9 @@ public class TimeSlotController {
         return ResponseEntity.badRequest().body("No authentication found");
     }
 
-    @GetMapping("/daySchedule/{doctorEmail}")
-    public ResponseEntity<?> daySchedule(@PathVariable String doctorEmail, @RequestBody Date date) {
+    @GetMapping("/day_schedule/{doctor_email}")
+    public ResponseEntity<?> daySchedule(@PathVariable("doctor_email") String doctorEmail,
+                                         @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date date) {
 
         List<TimeSlot> dayActivitiesList = timeSlotService.getDayActivities(doctorEmail, date);
 

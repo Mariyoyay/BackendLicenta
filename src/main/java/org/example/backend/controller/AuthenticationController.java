@@ -55,7 +55,7 @@ public class AuthenticationController {
         if (tokens.containsKey("error_message")){
             String error_message = tokens.get("error_message");
             response.setHeader("error", error_message);
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType(APPLICATION_JSON_VALUE);
             new ObjectMapper().writeValue(response.getOutputStream(), tokens);
             return;
@@ -70,6 +70,8 @@ public class AuthenticationController {
         refreshTokenCookie.setMaxAge((int) ((expiry_date.getTime() - System.currentTimeMillis())/1000)); //Time in seconds
 //        refreshTokenCookie.setSecure(true);
         response.addCookie(refreshTokenCookie);
+
+        System.out.println("-------------------------------------------------------REFRESHED");
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType(APPLICATION_JSON_VALUE);
@@ -94,7 +96,7 @@ public class AuthenticationController {
         if (reply.containsKey("error_message")){
             String error_message = (String) reply.get("error_message");
             response.setHeader("error", error_message);
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType(APPLICATION_JSON_VALUE);
             new ObjectMapper().writeValue(response.getOutputStream(), reply);
             return;

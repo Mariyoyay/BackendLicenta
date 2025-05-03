@@ -101,7 +101,7 @@ public class AuthenticationService {
 
             return tokens;
         } catch (Exception e){
-            e.printStackTrace();
+//            e.printStackTrace();
 
             Map<String, String> error = new HashMap<>();
             error.put("error_message", e.getMessage());
@@ -119,7 +119,7 @@ public class AuthenticationService {
 
         // checking if already blacklisted
         Optional<RefreshToken> token = refreshTokenRepository.findByRefreshToken(refresh_token);
-        if (!token.isPresent()) {
+        if (token.isEmpty()) {
             throw new RuntimeException("Refresh token not saved in repository");
         }
 
@@ -142,7 +142,7 @@ public class AuthenticationService {
             reply.put("logout", "Token successfully revoked");
             return reply;
         } catch (Exception e){
-            e.printStackTrace();
+//            e.printStackTrace();
 
             Map<String, Object> error = new HashMap<>();
             error.put("error_message", e.getMessage());
@@ -150,4 +150,25 @@ public class AuthenticationService {
             return error;
         }
     }
+
+//    @Transactional
+//    public Map<String, Object> forceLogout(String username){
+//        Map<String, Object> reply = new HashMap<>();
+//
+//        try {
+//            Optional<User> userOptional = userRepository.findByEmail(username);
+//            if (userOptional.isEmpty()) throw new RuntimeException("User not found");
+//            refreshTokenRepository.invalidateAllByUser(userOptional.get());
+//
+//            reply.put("success", true);
+//            reply.put("force_logout", "Token successfully force logged out");
+//            return reply;
+//        } catch (Exception e) {
+//
+//            Map<String, Object> error = new HashMap<>();
+//            error.put("error_message", e.getMessage());
+//
+//            return error;
+//        }
+//    }
 }
