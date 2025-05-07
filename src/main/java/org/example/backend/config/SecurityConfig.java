@@ -62,7 +62,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/roles/manage/**").hasAuthority(ROLE_ADMIN)
 
                         .requestMatchers("/api/time_slots/appointment/schedule").hasAuthority(ROLE_PATIENT)
-                        .requestMatchers("/api/time_slots/appointments/manage/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
+                        .requestMatchers("/api/time_slots/appointment/manage/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
                         .requestMatchers("/api/time_slots/occupied/**").hasAuthority(ROLE_DOCTOR)
                         .requestMatchers("/api/time_slots/daySchedule/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
 
