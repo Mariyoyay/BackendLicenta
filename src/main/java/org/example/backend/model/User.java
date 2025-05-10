@@ -68,7 +68,6 @@ public class User implements UserDetails {
         return true;
     }
 
-
     public Set<String> getRolesAsString() {
         return roles.stream().map(Role::getName).collect(Collectors.toSet());
     }

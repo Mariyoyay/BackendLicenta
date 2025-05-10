@@ -65,6 +65,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/time_slots/appointment/manage/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
                         .requestMatchers("/api/time_slots/occupied/**").hasAuthority(ROLE_DOCTOR)
                         .requestMatchers("/api/time_slots/daySchedule/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
+                        .requestMatchers("/api/users/myself").authenticated()
+                        .requestMatchers("/api/users/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR, ROLE_ADMIN)
 
                         .requestMatchers(HttpMethod.GET, "/api/users/public_resource").permitAll()
                         .anyRequest().authenticated()

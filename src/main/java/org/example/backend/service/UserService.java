@@ -6,7 +6,9 @@ import org.example.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.example.backend.utils.RoleNames.ROLE_PATIENT;
@@ -63,5 +65,12 @@ public class UserService {
         } else throw new RuntimeException("Invalid email. User doesn't exist");
 
         return user;
+    }
+
+    @Transactional
+    public List<User> getUsersByRole(String role_name) {
+        if (roleRepository.existsByName(role_name)) {
+          return userRepository.findAllByRolesContaining(roleRepository.findByName(role_name).get());
+        } else throw new RuntimeException("Invalid role name");
     }
 }

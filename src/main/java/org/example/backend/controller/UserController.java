@@ -23,9 +23,20 @@ public class UserController {
         this.authenticationService = authenticationService;
     }
 
-    @GetMapping("/getUsers")
+    @GetMapping("/get/all")
     public ResponseEntity<List<User>> getUsers() {
         return ResponseEntity.ok(userService.findAll());
+    }
+
+    @GetMapping("get/by_role/{role}")
+    public ResponseEntity<List<User>> getUsersByRole(@PathVariable("role") String role) {
+        return ResponseEntity.ok(userService.getUsersByRole(role));
+    }
+
+    @GetMapping("/user/{username}")
+    public ResponseEntity<User> getUser(@PathVariable("username") String username) {
+        User user = userService.getUserByEmail(username);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/myself")
