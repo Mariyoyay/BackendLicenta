@@ -81,6 +81,10 @@ public class TimeSlotService {
         if (appointmentDTO.getDurationMinutes() != null)
             appointment.setDurationMinutes(appointmentDTO.getDurationMinutes());
 
+        if (appointmentDTO.getIsCanceled() != null){
+            appointment.setIsCanceled(appointmentDTO.getIsCanceled());
+        }
+
         if (appointmentDTO.getDoctorID() != null) {
             User doctor;
             if (userRepository.existsById(appointmentDTO.getDoctorID())) {
@@ -111,6 +115,19 @@ public class TimeSlotService {
         appointment.setLastEditTime(LocalDateTime.now());
 
         return appointmentRepository.save(appointment);
+    }
+
+    @Transactional
+    public Appointment deleteAppointment(Long appointmentID, String editorEmail) {
+        Optional<Appointment> optionalAppointment = appointmentRepository.findById(appointmentID);
+        if (optionalAppointment.isEmpty()) throw new RuntimeException("Invalid occupied time slot id");
+        Appointment appointment = optionalAppointment.get();
+
+        if (!Objects.equals(appointment.getDoctor().getEmail(), editorEmail))
+            throw new RuntimeException("Appointment you are trying to delete does not belong to this Doctor");
+
+        appointmentRepository.delete(appointment);
+        return appointment;
     }
 
     @Transactional
@@ -219,8 +236,8 @@ public class TimeSlotService {
         if (!Objects.equals(occupiedTimeSlot.getDoctor().getEmail(), doctorEmail))
             throw new RuntimeException("TimeSlot doesn't belong to this Doctor");
 
-       occupiedTimeSlotRepository.delete(occupiedTimeSlot);
-       return occupiedTimeSlot;
+        occupiedTimeSlotRepository.delete(occupiedTimeSlot);
+        return occupiedTimeSlot;
     }
 
     @Transactional

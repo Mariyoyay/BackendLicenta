@@ -93,6 +93,23 @@ public class TimeSlotController {
         return ResponseEntity.badRequest().body("No authentication found");
     }
 
+    @DeleteMapping("/appointment/manage/delete")
+    public ResponseEntity<?> deleteAppointment(@RequestBody TimeSlotDTO appointmentDTO) {
+        Long appointmentID = appointmentDTO.getId();
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            String editorEmail = (String) authentication.getPrincipal();
+
+            Appointment appointment = timeSlotService.deleteAppointment(appointmentID, editorEmail);
+
+            return ResponseEntity.ok(appointment);
+        }
+
+        return ResponseEntity.badRequest().body("No authentication found");
+    }
+
     @PostMapping("/occupied/add")
     public ResponseEntity<?> addOccupiedTimeSlot(@RequestBody TimeSlotDTO occupiedTimeSlotDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

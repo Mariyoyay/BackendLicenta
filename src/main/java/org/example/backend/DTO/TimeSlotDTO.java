@@ -16,5 +16,5 @@ public class TimeSlotDTO {
 
 //    private User lastEditUser;
 //    private Date lastEditTime;
-//    private Boolean isCanceled = false;
+    private Boolean isCanceled;
 }
