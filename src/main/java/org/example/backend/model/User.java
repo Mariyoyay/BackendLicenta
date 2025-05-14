@@ -32,6 +32,8 @@ public class User implements UserDetails {
 
     private String phone;
 
+    private String color = "#FFFFFF";
+
     @ManyToMany(targetEntity = Role.class, fetch = FetchType.EAGER)
     private Set<Role> roles;
 

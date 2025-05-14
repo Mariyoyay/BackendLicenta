@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.example.backend.utils.RoleNames.ROLE_DOCTOR;
 import static org.example.backend.utils.RoleNames.ROLE_PATIENT;
 
 @Service
@@ -72,5 +73,15 @@ public class UserService {
         if (roleRepository.existsByName(role_name)) {
           return userRepository.findAllByRolesContaining(roleRepository.findByName(role_name).get());
         } else throw new RuntimeException("Invalid role name");
+    }
+
+    @Transactional
+    public User setDoctorColor(String doctorEmail, String color) {
+        User doctor;
+        if (userRepository.existsByEmail(doctorEmail)) {
+            doctor = userRepository.findByEmail(doctorEmail).get();
+        } else throw new RuntimeException("Invalid email. User doesn't exist");
+        doctor.setColor(color);
+        return userRepository.save(doctor);
     }
 }

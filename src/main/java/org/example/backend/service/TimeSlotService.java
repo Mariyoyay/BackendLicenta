@@ -1,12 +1,10 @@
 package org.example.backend.service;
 
 import org.example.backend.DTO.TimeSlotDTO;
-import org.example.backend.model.Appointment;
-import org.example.backend.model.OccupiedTimeSlot;
-import org.example.backend.model.TimeSlot;
-import org.example.backend.model.User;
+import org.example.backend.model.*;
 import org.example.backend.repository.AppointmentRepository;
 import org.example.backend.repository.OccupiedTimeSlotRepository;
+import org.example.backend.repository.OfficeRepository;
 import org.example.backend.repository.UserRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -25,11 +23,13 @@ public class TimeSlotService {
     private final AppointmentRepository appointmentRepository;
     private final OccupiedTimeSlotRepository occupiedTimeSlotRepository;
     private final UserRepository userRepository;
+    private final OfficeRepository officeRepository;
 
-    public TimeSlotService(AppointmentRepository appointmentRepository, OccupiedTimeSlotRepository occ, UserRepository userRepository) {
+    public TimeSlotService(AppointmentRepository appointmentRepository, OccupiedTimeSlotRepository occ, UserRepository userRepository, OfficeRepository officeRepository) {
         this.appointmentRepository = appointmentRepository;
         this.occupiedTimeSlotRepository = occ;
         this.userRepository = userRepository;
+        this.officeRepository = officeRepository;
     }
 
     @Transactional
@@ -39,13 +39,24 @@ public class TimeSlotService {
         newAppointment.setStartTime(appointmentDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
         newAppointment.setDurationMinutes(appointmentDTO.getDurationMinutes());
 
+        Office office;
+        if (officeRepository.existsById(appointmentDTO.getOfficeID())){
+            office = officeRepository.findById(appointmentDTO.getOfficeID()).get();
+        } else throw new RuntimeException("Invalid id. Office doesn't exist");
+        newAppointment.setOffice(office);
+//        System.out.println("-------------------------" + newAppointment.getOffice().getName() + " " + newAppointment.getOffice().getDoctors().stream().toList().get(0).getEmail());
+
         User doctor;
         if (userRepository.existsById(appointmentDTO.getDoctorID())) {
             doctor = userRepository.findById(appointmentDTO.getDoctorID()).get();
         } else throw new RuntimeException("Invalid email. User doesn't exist");
 
+//        System.out.println(doctor.getEmail() + doctor.getId());
+
         if(!doctor.getRolesAsString().contains(ROLE_DOCTOR))
             throw new RuntimeException("Doctor doesn't have ROLE_DOCTOR");
+        if(!newAppointment.getOffice().getDoctorIds().contains(doctor.getId()))
+            throw new RuntimeException("Doctor doesn't work in this office");
         newAppointment.setDoctor(doctor);
 
         User patient;
@@ -85,6 +96,14 @@ public class TimeSlotService {
             appointment.setIsCanceled(appointmentDTO.getIsCanceled());
         }
 
+        if (appointmentDTO.getOfficeID() != null) {
+            Office office;
+            if (officeRepository.existsById(appointmentDTO.getOfficeID())) {
+                office = officeRepository.findById(appointmentDTO.getOfficeID()).get();
+            } else throw new RuntimeException("Invalid id. Office doesn't exist");
+            appointment.setOffice(office);
+        }
+
         if (appointmentDTO.getDoctorID() != null) {
             User doctor;
             if (userRepository.existsById(appointmentDTO.getDoctorID())) {
@@ -93,6 +112,8 @@ public class TimeSlotService {
 
             if (!doctor.getRolesAsString().contains(ROLE_DOCTOR))
                 throw new RuntimeException("Doctor doesn't have ROLE_DOCTOR");
+            if (!appointment.getOffice().getDoctorIds().contains(doctor.getId()))
+                throw new RuntimeException("Doctor doesn't work in this office");
             appointment.setDoctor(doctor);
         }
 
@@ -168,6 +189,12 @@ public class TimeSlotService {
         newAppointment.setStartTime(appointmentDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
         newAppointment.setDurationMinutes(appointmentDTO.getDurationMinutes());
 
+        Office office;
+        if (officeRepository.existsById(appointmentDTO.getOfficeID())){
+            office = officeRepository.findById(appointmentDTO.getOfficeID()).get();
+        } else throw new RuntimeException("Invalid id. Office doesn't exist");
+        newAppointment.setOffice(office);
+
         User doctor;
         if (userRepository.existsById(appointmentDTO.getDoctorID())) {
             doctor = userRepository.findById(appointmentDTO.getDoctorID()).get();
@@ -175,6 +202,8 @@ public class TimeSlotService {
 
         if(!doctor.getRolesAsString().contains(ROLE_DOCTOR))
             throw new RuntimeException("Doctor doesn't have ROLE_DOCTOR");
+        if(!newAppointment.getOffice().getDoctors().contains(doctor))
+            throw new RuntimeException("Doctor doesn't work in this office");
         newAppointment.setDoctor(doctor);
 
         User patient;
@@ -240,8 +269,31 @@ public class TimeSlotService {
         return occupiedTimeSlot;
     }
 
+
+    // READS
+
     @Transactional
-    public List<TimeSlot> getDayActivities(String doctorEmail, Date date) {
+    public List<TimeSlot> getDayActivitiesForOffice(Long officeId, Date date) {
+        Office office;
+        if (officeRepository.existsById(officeId)) {
+            office = officeRepository.findById(officeId).get();
+        } else throw new RuntimeException("Invalid email. Doctor doesn't exist");
+
+        LocalDate dateAsLocalDate = date.toInstant().atZone(ZoneId.of("UTC")).toLocalDate();
+        LocalDateTime startTime = dateAsLocalDate.atStartOfDay();
+        LocalDateTime endTime = dateAsLocalDate.atTime(23, 59, 59);
+
+        List<TimeSlot> timeSlots = new ArrayList<>(appointmentRepository.findAllByOfficeAndStartTimeBetween(office, startTime, endTime));
+
+        for (User doctor: office.getDoctors()) {
+            timeSlots.addAll(occupiedTimeSlotRepository.findAllByDoctorAndStartTimeBetween(doctor, startTime,endTime));
+        }
+
+        return timeSlots;
+    }
+
+    @Transactional
+    public List<TimeSlot> getDayActivitiesForDoctor(String doctorEmail, Date date) {
         User doctor;
         if (userRepository.existsByEmail(doctorEmail)) {
             doctor = userRepository.findByEmail(doctorEmail).get();

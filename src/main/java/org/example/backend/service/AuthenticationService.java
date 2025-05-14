@@ -142,7 +142,6 @@ public class AuthenticationService {
             reply.put("logout", "Token successfully revoked");
             return reply;
         } catch (Exception e){
-//            e.printStackTrace();
 
             Map<String, Object> error = new HashMap<>();
             error.put("error_message", e.getMessage());

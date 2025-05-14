@@ -60,11 +60,15 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/users/manage/add").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
                         .requestMatchers("/api/users/roles/manage/**").hasAuthority(ROLE_ADMIN)
+                        .requestMatchers("/api/users/doctor/set_color").hasAuthority(ROLE_DOCTOR)
 
                         .requestMatchers("/api/time_slots/appointment/schedule").hasAuthority(ROLE_PATIENT)
                         .requestMatchers("/api/time_slots/appointment/manage/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
                         .requestMatchers("/api/time_slots/occupied/**").hasAuthority(ROLE_DOCTOR)
                         .requestMatchers("/api/time_slots/daySchedule/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
+
+                        .requestMatchers("/api/offices/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR)
+
                         .requestMatchers("/api/users/myself").authenticated()
                         .requestMatchers("/api/users/**").hasAnyAuthority(ROLE_EMPLOYEE, ROLE_DOCTOR, ROLE_ADMIN)
 

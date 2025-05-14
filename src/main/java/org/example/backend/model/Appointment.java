@@ -20,6 +20,9 @@ public class Appointment implements TimeSlot{
     private Integer durationMinutes;
 
     @ManyToOne
+    private Office office;
+
+    @ManyToOne
     private User doctor;
 
     @ManyToOne

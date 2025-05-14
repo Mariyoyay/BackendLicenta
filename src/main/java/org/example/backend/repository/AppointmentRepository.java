@@ -1,6 +1,7 @@
 package org.example.backend.repository;
 
 import org.example.backend.model.Appointment;
+import org.example.backend.model.Office;
 import org.example.backend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,4 +22,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     void deleteCanceledAppointments(@Param("today") LocalDateTime today);
 
     List<Appointment> findAllByDoctorAndStartTimeBetween(User doctor, LocalDateTime start, LocalDateTime end);
+
+    List<Appointment> findAllByOfficeAndStartTimeBetween(Office office, LocalDateTime start, LocalDateTime end);
 }

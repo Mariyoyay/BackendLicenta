@@ -54,6 +54,21 @@ public class UserController {
         return ResponseEntity.badRequest().body("No authentication found");
     }
 
+    @PostMapping("/doctor/set_color")
+    public ResponseEntity<?> setDoctorColor(@RequestBody String color) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            String doctorEmail = (String) authentication.getPrincipal();
+
+            User doctor = userService.setDoctorColor(doctorEmail, color);
+
+            return ResponseEntity.ok(doctor);
+        }
+
+        return ResponseEntity.badRequest().body("No authentication found");
+    }
+
     @GetMapping("/public_resource")
     public String getPublicResource() {return "You are accessing the Public Resource";}
 

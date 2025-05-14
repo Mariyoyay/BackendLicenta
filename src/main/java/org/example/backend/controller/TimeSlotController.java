@@ -61,7 +61,6 @@ public class TimeSlotController {
 
     @PostMapping("/appointment/manage/add")
     public ResponseEntity<?> addAppointment(@RequestBody TimeSlotDTO appointmentDTO) {
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && authentication.isAuthenticated()) {
@@ -157,11 +156,19 @@ public class TimeSlotController {
         return ResponseEntity.badRequest().body("No authentication found");
     }
 
-    @GetMapping("/day_schedule/{doctor_email}")
+    @GetMapping("/day_schedule/doctor/{doctor_email}")
     public ResponseEntity<?> daySchedule(@PathVariable("doctor_email") String doctorEmail,
                                          @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date date) {
 
-        List<TimeSlot> dayActivitiesList = timeSlotService.getDayActivities(doctorEmail, date);
+        List<TimeSlot> dayActivitiesList = timeSlotService.getDayActivitiesForDoctor(doctorEmail, date);
+
+        return ResponseEntity.ok(dayActivitiesList);
+    }
+
+    @GetMapping ("/day_schedule/office/{office_id}")
+    public ResponseEntity<?> daySchedule(@PathVariable("office_id") Long officeId, @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date date) {
+
+        List<TimeSlot> dayActivitiesList = timeSlotService.getDayActivitiesForOffice(officeId, date);
 
         return ResponseEntity.ok(dayActivitiesList);
     }
