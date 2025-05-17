@@ -1,6 +1,7 @@
 package org.example.backend.controller;
 
 import org.example.backend.DTO.TimeSlotDTO;
+import org.example.backend.exceptions.OverlappingTimeSlotException;
 import org.example.backend.model.Appointment;
 import org.example.backend.model.OccupiedTimeSlot;
 import org.example.backend.model.TimeSlot;
@@ -67,7 +68,12 @@ public class TimeSlotController {
 
             String editorEmail = (String) authentication.getPrincipal();
 
-            Appointment addedAppointment = timeSlotService.addAppointment(appointmentDTO, editorEmail);
+            Appointment addedAppointment = null;
+            try {
+                addedAppointment = timeSlotService.addAppointment(appointmentDTO, editorEmail);
+            } catch (OverlappingTimeSlotException e) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
 
             return ResponseEntity.ok(addedAppointment);
         }
@@ -84,7 +90,12 @@ public class TimeSlotController {
 
             String editorEmail = (String) authentication.getPrincipal();
 
-            Appointment editedAppointment = timeSlotService.updateAppointment(appointmentDTO, editorEmail);
+            Appointment editedAppointment = null;
+            try {
+                editedAppointment = timeSlotService.updateAppointment(appointmentDTO, editorEmail);
+            } catch (OverlappingTimeSlotException e) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
 
             return ResponseEntity.ok(editedAppointment);
         }
@@ -116,7 +127,13 @@ public class TimeSlotController {
         if (authentication != null && authentication.isAuthenticated()) {
             String doctorEmail = (String) authentication.getPrincipal();
 
-            OccupiedTimeSlot occupiedTimeSlot = timeSlotService.addOccupiedTimeSlot(occupiedTimeSlotDTO, doctorEmail);
+            OccupiedTimeSlot occupiedTimeSlot;
+
+            try {
+                occupiedTimeSlot = timeSlotService.addOccupiedTimeSlot(occupiedTimeSlotDTO, doctorEmail);
+            } catch (OverlappingTimeSlotException e) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
 
             return ResponseEntity.ok(occupiedTimeSlot);
         }
@@ -131,7 +148,12 @@ public class TimeSlotController {
         if (authentication != null && authentication.isAuthenticated()) {
             String doctorEmail = (String) authentication.getPrincipal();
 
-            OccupiedTimeSlot occupiedTimeSlot = timeSlotService.updateOccupiedTimeSlot(occupiedTimeSlotDTO, doctorEmail);
+            OccupiedTimeSlot occupiedTimeSlot = null;
+            try {
+                occupiedTimeSlot = timeSlotService.updateOccupiedTimeSlot(occupiedTimeSlotDTO, doctorEmail);
+            } catch (OverlappingTimeSlotException e) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
 
             return ResponseEntity.ok(occupiedTimeSlot);
         }

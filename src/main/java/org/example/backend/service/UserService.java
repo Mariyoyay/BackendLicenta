@@ -41,7 +41,7 @@ public class UserService {
         } else throw new RuntimeException("Invalid email. User doesn't exist");
 
         roles.forEach(role -> user.getRoles().add(roleRepository.findByName(role).get()));
-        return userRepository.save(user);
+        return user;
     }
 
     @Transactional
@@ -55,7 +55,7 @@ public class UserService {
             role.getName().equals(ROLE_PATIENT) || !roles.contains(role.getName())
         ).collect(Collectors.toSet()));
 
-        return userRepository.save(user);
+        return user;
     }
 
     @Transactional
@@ -82,6 +82,6 @@ public class UserService {
             doctor = userRepository.findByEmail(doctorEmail).get();
         } else throw new RuntimeException("Invalid email. User doesn't exist");
         doctor.setColor(color);
-        return userRepository.save(doctor);
+        return doctor;
     }
 }

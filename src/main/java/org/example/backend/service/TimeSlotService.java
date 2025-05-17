@@ -1,6 +1,7 @@
 package org.example.backend.service;
 
 import org.example.backend.DTO.TimeSlotDTO;
+import org.example.backend.exceptions.OverlappingTimeSlotException;
 import org.example.backend.model.*;
 import org.example.backend.repository.AppointmentRepository;
 import org.example.backend.repository.OccupiedTimeSlotRepository;
@@ -33,7 +34,7 @@ public class TimeSlotService {
     }
 
     @Transactional
-    public Appointment addAppointment(TimeSlotDTO appointmentDTO, String editorEmail) {
+    public Appointment addAppointment(TimeSlotDTO appointmentDTO, String editorEmail) throws OverlappingTimeSlotException {
         Appointment newAppointment = new Appointment();
         newAppointment.setDescription(appointmentDTO.getDescription());
         newAppointment.setStartTime(appointmentDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
@@ -44,14 +45,11 @@ public class TimeSlotService {
             office = officeRepository.findById(appointmentDTO.getOfficeID()).get();
         } else throw new RuntimeException("Invalid id. Office doesn't exist");
         newAppointment.setOffice(office);
-//        System.out.println("-------------------------" + newAppointment.getOffice().getName() + " " + newAppointment.getOffice().getDoctors().stream().toList().get(0).getEmail());
 
         User doctor;
         if (userRepository.existsById(appointmentDTO.getDoctorID())) {
             doctor = userRepository.findById(appointmentDTO.getDoctorID()).get();
         } else throw new RuntimeException("Invalid email. User doesn't exist");
-
-//        System.out.println(doctor.getEmail() + doctor.getId());
 
         if(!doctor.getRolesAsString().contains(ROLE_DOCTOR))
             throw new RuntimeException("Doctor doesn't have ROLE_DOCTOR");
@@ -68,6 +66,8 @@ public class TimeSlotService {
             throw new RuntimeException("Patient doesn't have ROLE_PATIENT");
         newAppointment.setPatient(patient);
 
+        if (this.isTimeSlotOverlapping(newAppointment)) throw new OverlappingTimeSlotException("The Office/Doctor/Patient is occupied at that time");
+
         User editor;
         if (userRepository.existsByEmail(editorEmail)) {
             editor = userRepository.findByEmail(editorEmail).get();
@@ -80,10 +80,14 @@ public class TimeSlotService {
     }
 
     @Transactional
-    public Appointment updateAppointment(TimeSlotDTO appointmentDTO, String editorEmail) {
+    public Appointment updateAppointment(TimeSlotDTO appointmentDTO, String editorEmail) throws OverlappingTimeSlotException {
         Optional<Appointment> appointmentOptional = appointmentRepository.findById(appointmentDTO.getId());
         if (appointmentOptional.isEmpty()) throw new RuntimeException("Invalid appointment id");
         Appointment appointment = appointmentOptional.get();
+
+        if (this.isTimeSlotOverlapping(appointment, appointmentDTO))
+            throw new OverlappingTimeSlotException("The Office/Doctor/Patient is occupied at that time");
+
 
         if (appointmentDTO.getDescription() != null)
             appointment.setDescription(appointmentDTO.getDescription());
@@ -92,9 +96,9 @@ public class TimeSlotService {
         if (appointmentDTO.getDurationMinutes() != null)
             appointment.setDurationMinutes(appointmentDTO.getDurationMinutes());
 
-        if (appointmentDTO.getIsCanceled() != null){
+        if (appointmentDTO.getIsCanceled() != null)
             appointment.setIsCanceled(appointmentDTO.getIsCanceled());
-        }
+
 
         if (appointmentDTO.getOfficeID() != null) {
             Office office;
@@ -127,6 +131,9 @@ public class TimeSlotService {
                 throw new RuntimeException("Patient doesn't have ROLE_PATIENT");
             appointment.setPatient(patient);
         }
+
+
+
         User editor;
         if (userRepository.existsByEmail(editorEmail)) {
             editor = userRepository.findByEmail(editorEmail).get();
@@ -135,7 +142,7 @@ public class TimeSlotService {
         appointment.setLastEditUser(editor);
         appointment.setLastEditTime(LocalDateTime.now());
 
-        return appointmentRepository.save(appointment);
+        return appointment;
     }
 
     @Transactional
@@ -174,12 +181,14 @@ public class TimeSlotService {
         appointment.setIsCanceled(true);
         appointment.setLastEditTime(LocalDateTime.now());
 
-        return appointmentRepository.save(appointment);
+        return appointment;
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
-    public void deletePassedCanceledAppointments(){
+    @Scheduled(cron = "0 0 0 * * MON")
+    @Transactional
+    public void deletePassedCanceledAppointmentsAndPassedOccupiedTimeSlots(){
         appointmentRepository.deleteCanceledAppointments(LocalDateTime.now());
+        occupiedTimeSlotRepository.deletePassedOccupiedTimeSlots(LocalDateTime.now());
     }
 
     @Transactional
@@ -220,7 +229,7 @@ public class TimeSlotService {
     }
 
     @Transactional
-    public OccupiedTimeSlot addOccupiedTimeSlot(TimeSlotDTO occupiedTimeSlotDTO, String doctorEmail) {
+    public OccupiedTimeSlot addOccupiedTimeSlot(TimeSlotDTO occupiedTimeSlotDTO, String doctorEmail) throws OverlappingTimeSlotException {
         OccupiedTimeSlot occupiedTimeSlot = new OccupiedTimeSlot();
         if (occupiedTimeSlotDTO.getDescription() != null)
             occupiedTimeSlot.setDescription(occupiedTimeSlotDTO.getDescription());
@@ -234,14 +243,19 @@ public class TimeSlotService {
 
         occupiedTimeSlot.setDoctor(doctor);
 
+        if (this.isTimeSlotOverlapping(occupiedTimeSlot)) throw new OverlappingTimeSlotException("OccupiedTimeSlot is overlapping with another existing appointment");
+
         return occupiedTimeSlotRepository.save(occupiedTimeSlot);
     }
 
     @Transactional
-    public OccupiedTimeSlot updateOccupiedTimeSlot(TimeSlotDTO occupiedTimeSlotDTO, String doctorEmail) {
+    public OccupiedTimeSlot updateOccupiedTimeSlot(TimeSlotDTO occupiedTimeSlotDTO, String doctorEmail) throws OverlappingTimeSlotException {
         Optional<OccupiedTimeSlot> optionalOccupiedTimeSlot = occupiedTimeSlotRepository.findById(occupiedTimeSlotDTO.getId());
         if (optionalOccupiedTimeSlot.isEmpty()) throw new RuntimeException("Invalid occupied time slot id");
         OccupiedTimeSlot occupiedTimeSlot = optionalOccupiedTimeSlot.get();
+
+        if (this.isTimeSlotOverlapping(occupiedTimeSlot, occupiedTimeSlotDTO)) throw new OverlappingTimeSlotException("OccupiedTimeSlot is overlapping with another existing appointment");
+
 
         if (!Objects.equals(occupiedTimeSlot.getDoctor().getEmail(), doctorEmail))
             throw new RuntimeException("TimeSlot doesn't belong to this Doctor");
@@ -253,7 +267,8 @@ public class TimeSlotService {
         if (occupiedTimeSlotDTO.getDurationMinutes() != null)
             occupiedTimeSlot.setDurationMinutes(occupiedTimeSlotDTO.getDurationMinutes());
 
-        return occupiedTimeSlotRepository.save(occupiedTimeSlot);
+
+        return occupiedTimeSlot;
     }
 
     @Transactional
@@ -309,5 +324,106 @@ public class TimeSlotService {
         activities.addAll(occupiedTimeSlotRepository.findAllByDoctorAndStartTimeBetween(doctor, startTime,endTime));
 
         return activities;
+    }
+
+    // VALIDATIONS
+
+    private Boolean isTimeSlotOverlapping(Appointment appointment) {
+        LocalDateTime startTime = appointment.getStartTime();
+        LocalDateTime endTime = startTime.plusMinutes(appointment.getDurationMinutes());
+
+        Integer numberOverlappingAppointments = appointmentRepository.countOverlappingAppointmentsByOfficeAndByDoctorAndByPatient(startTime, endTime, appointment.getOffice().getId(), appointment.getDoctor().getId(), appointment.getPatient().getId());
+        if (numberOverlappingAppointments > 0) return true;
+
+        numberOverlappingAppointments = occupiedTimeSlotRepository.countOverlappingOccupiedTimeSlotsByDoctor(startTime, endTime, appointment.getDoctor().getId());
+        return numberOverlappingAppointments > 0;
+    }
+
+    private Boolean isTimeSlotOverlapping(Appointment appointment, TimeSlotDTO updatedAppointmentDTO) {
+        LocalDateTime startTime;
+        LocalDateTime endTime;
+        Long appointmentID = appointment.getId();
+        Long officeId;
+        Long doctorId;
+        Long patientId;
+
+        if (updatedAppointmentDTO.getStartTime() == null) {
+            startTime = appointment.getStartTime();
+        } else {
+            startTime = updatedAppointmentDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime();
+        }
+
+        if (updatedAppointmentDTO.getDurationMinutes() == null) {
+            endTime = startTime.plusMinutes(appointment.getDurationMinutes());
+        } else {
+            endTime = startTime.plusMinutes(updatedAppointmentDTO.getDurationMinutes());
+        }
+
+        if (updatedAppointmentDTO.getOfficeID() == null) {
+            officeId = appointment.getOffice().getId();
+        } else {
+            officeId = updatedAppointmentDTO.getOfficeID();
+        }
+
+        if (updatedAppointmentDTO.getDoctorID() == null) {
+            doctorId = appointment.getDoctor().getId();
+        } else {
+            doctorId = updatedAppointmentDTO.getDoctorID();
+        }
+
+        if (updatedAppointmentDTO.getPatientID() == null) {
+            patientId = appointment.getPatient().getId();
+        } else {
+            patientId = updatedAppointmentDTO.getPatientID();
+        }
+
+
+        Integer numberOverlappingAppointments =
+                appointmentRepository
+                        .countOverlappingAppointmentsByOfficeAndByDoctorAndByPatientExcludingCurrentAppointment(
+                                startTime, endTime, appointmentID, officeId, doctorId, patientId);
+        if (numberOverlappingAppointments > 0) return true;
+
+        numberOverlappingAppointments = occupiedTimeSlotRepository.countOverlappingOccupiedTimeSlotsByDoctor(startTime, endTime, appointment.getDoctor().getId());
+        return numberOverlappingAppointments > 0;
+    }
+
+    private Boolean isTimeSlotOverlapping(OccupiedTimeSlot occupiedTimeSlot) {
+
+        LocalDateTime startTime = occupiedTimeSlot.getStartTime();
+        LocalDateTime endTime = startTime.plusMinutes(occupiedTimeSlot.getDurationMinutes());
+
+        Integer numberOverlappingAppointments = appointmentRepository.countOverlappingAppointmentsByDoctor(startTime, endTime, occupiedTimeSlot.getDoctor().getId());
+
+        return numberOverlappingAppointments != 0;
+    }
+
+    private Boolean isTimeSlotOverlapping(OccupiedTimeSlot occupiedTimeSlot, TimeSlotDTO updatedOccupiedTimeSlotDTO) {
+        LocalDateTime startTime;
+        LocalDateTime endTime;
+        Long doctorId;
+
+        if (updatedOccupiedTimeSlotDTO.getStartTime() == null) {
+            startTime = occupiedTimeSlot.getStartTime();
+        } else {
+            startTime = updatedOccupiedTimeSlotDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime();
+        }
+
+        if (updatedOccupiedTimeSlotDTO.getDurationMinutes() == null) {
+            endTime = startTime.plusMinutes(occupiedTimeSlot.getDurationMinutes());
+        } else {
+            endTime = startTime.plusMinutes(updatedOccupiedTimeSlotDTO.getDurationMinutes());
+        }
+
+        if (updatedOccupiedTimeSlotDTO.getDoctorID() == null) {
+            doctorId = occupiedTimeSlot.getDoctor().getId();
+        } else {
+            doctorId = updatedOccupiedTimeSlotDTO.getDoctorID();
+        }
+
+
+        Integer numberOverlappingAppointments = appointmentRepository.countOverlappingAppointmentsByDoctor(startTime, endTime, doctorId);
+
+        return numberOverlappingAppointments != 0;
     }
 }
