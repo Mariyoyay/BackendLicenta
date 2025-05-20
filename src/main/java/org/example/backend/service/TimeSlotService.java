@@ -37,18 +37,18 @@ public class TimeSlotService {
     public Appointment addAppointment(TimeSlotDTO appointmentDTO, String editorEmail) throws OverlappingTimeSlotException {
         Appointment newAppointment = new Appointment();
         newAppointment.setDescription(appointmentDTO.getDescription());
-        newAppointment.setStartTime(appointmentDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
+        newAppointment.setStartTime(appointmentDTO.getStartTime());
         newAppointment.setDurationMinutes(appointmentDTO.getDurationMinutes());
 
         Office office;
-        if (officeRepository.existsById(appointmentDTO.getOfficeID())){
-            office = officeRepository.findById(appointmentDTO.getOfficeID()).get();
+        if (officeRepository.existsById(appointmentDTO.getOffice().getId())){
+            office = officeRepository.findById(appointmentDTO.getOffice().getId()).get();
         } else throw new RuntimeException("Invalid id. Office doesn't exist");
         newAppointment.setOffice(office);
 
         User doctor;
-        if (userRepository.existsById(appointmentDTO.getDoctorID())) {
-            doctor = userRepository.findById(appointmentDTO.getDoctorID()).get();
+        if (userRepository.existsById(appointmentDTO.getDoctor().getId())) {
+            doctor = userRepository.findById(appointmentDTO.getDoctor().getId()).get();
         } else throw new RuntimeException("Invalid email. User doesn't exist");
 
         if(!doctor.getRolesAsString().contains(ROLE_DOCTOR))
@@ -58,8 +58,8 @@ public class TimeSlotService {
         newAppointment.setDoctor(doctor);
 
         User patient;
-        if (userRepository.existsById(appointmentDTO.getPatientID())) {
-            patient = userRepository.findById(appointmentDTO.getPatientID()).get();
+        if (userRepository.existsById(appointmentDTO.getPatient().getId())) {
+            patient = userRepository.findById(appointmentDTO.getPatient().getId()).get();
         } else throw new RuntimeException("Invalid email. User doesn't exist");
 
         if (!patient.getRolesAsString().contains(ROLE_PATIENT))
@@ -92,7 +92,7 @@ public class TimeSlotService {
         if (appointmentDTO.getDescription() != null)
             appointment.setDescription(appointmentDTO.getDescription());
         if (appointmentDTO.getStartTime() != null)
-            appointment.setStartTime(appointmentDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
+            appointment.setStartTime(appointmentDTO.getStartTime());
         if (appointmentDTO.getDurationMinutes() != null)
             appointment.setDurationMinutes(appointmentDTO.getDurationMinutes());
 
@@ -100,18 +100,18 @@ public class TimeSlotService {
             appointment.setIsCanceled(appointmentDTO.getIsCanceled());
 
 
-        if (appointmentDTO.getOfficeID() != null) {
+        if (appointmentDTO.getOffice().getId() != null) {
             Office office;
-            if (officeRepository.existsById(appointmentDTO.getOfficeID())) {
-                office = officeRepository.findById(appointmentDTO.getOfficeID()).get();
+            if (officeRepository.existsById(appointmentDTO.getOffice().getId())) {
+                office = officeRepository.findById(appointmentDTO.getOffice().getId()).get();
             } else throw new RuntimeException("Invalid id. Office doesn't exist");
             appointment.setOffice(office);
         }
 
-        if (appointmentDTO.getDoctorID() != null) {
+        if (appointmentDTO.getDoctor().getId() != null) {
             User doctor;
-            if (userRepository.existsById(appointmentDTO.getDoctorID())) {
-                doctor = userRepository.findById(appointmentDTO.getDoctorID()).get();
+            if (userRepository.existsById(appointmentDTO.getDoctor().getId())) {
+                doctor = userRepository.findById(appointmentDTO.getDoctor().getId()).get();
             } else throw new RuntimeException("Invalid email. User doesn't exist");
 
             if (!doctor.getRolesAsString().contains(ROLE_DOCTOR))
@@ -121,10 +121,10 @@ public class TimeSlotService {
             appointment.setDoctor(doctor);
         }
 
-        if (appointmentDTO.getPatientID() != null) {
+        if (appointmentDTO.getPatient().getId() != null) {
             User patient;
-            if (userRepository.existsById(appointmentDTO.getPatientID())) {
-                patient = userRepository.findById(appointmentDTO.getPatientID()).get();
+            if (userRepository.existsById(appointmentDTO.getPatient().getId())) {
+                patient = userRepository.findById(appointmentDTO.getPatient().getId()).get();
             } else throw new RuntimeException("Invalid email. User doesn't exist");
 
             if (!patient.getRolesAsString().contains(ROLE_PATIENT))
@@ -195,18 +195,18 @@ public class TimeSlotService {
     public Appointment scheduleAppointment(TimeSlotDTO appointmentDTO, String patientEmail) {
         Appointment newAppointment = new Appointment();
         newAppointment.setDescription(appointmentDTO.getDescription());
-        newAppointment.setStartTime(appointmentDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
+        newAppointment.setStartTime(appointmentDTO.getStartTime());
         newAppointment.setDurationMinutes(appointmentDTO.getDurationMinutes());
 
         Office office;
-        if (officeRepository.existsById(appointmentDTO.getOfficeID())){
-            office = officeRepository.findById(appointmentDTO.getOfficeID()).get();
+        if (officeRepository.existsById(appointmentDTO.getOffice().getId())){
+            office = officeRepository.findById(appointmentDTO.getOffice().getId()).get();
         } else throw new RuntimeException("Invalid id. Office doesn't exist");
         newAppointment.setOffice(office);
 
         User doctor;
-        if (userRepository.existsById(appointmentDTO.getDoctorID())) {
-            doctor = userRepository.findById(appointmentDTO.getDoctorID()).get();
+        if (userRepository.existsById(appointmentDTO.getDoctor().getId())) {
+            doctor = userRepository.findById(appointmentDTO.getDoctor().getId()).get();
         } else throw new RuntimeException("Invalid email. User doesn't exist");
 
         if(!doctor.getRolesAsString().contains(ROLE_DOCTOR))
@@ -229,12 +229,12 @@ public class TimeSlotService {
     }
 
     @Transactional
-    public OccupiedTimeSlot addOccupiedTimeSlot(TimeSlotDTO occupiedTimeSlotDTO, String doctorEmail) throws OverlappingTimeSlotException {
+    public OccupiedTimeSlot addOccupiedTimeSlot(TimeSlotDTO occupiedOldTimeSlotDTO, String doctorEmail) throws OverlappingTimeSlotException {
         OccupiedTimeSlot occupiedTimeSlot = new OccupiedTimeSlot();
-        if (occupiedTimeSlotDTO.getDescription() != null)
-            occupiedTimeSlot.setDescription(occupiedTimeSlotDTO.getDescription());
-        occupiedTimeSlot.setStartTime(occupiedTimeSlotDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
-        occupiedTimeSlot.setDurationMinutes(occupiedTimeSlotDTO.getDurationMinutes());
+        if (occupiedOldTimeSlotDTO.getDescription() != null)
+            occupiedTimeSlot.setDescription(occupiedOldTimeSlotDTO.getDescription());
+        occupiedTimeSlot.setStartTime(occupiedOldTimeSlotDTO.getStartTime());
+        occupiedTimeSlot.setDurationMinutes(occupiedOldTimeSlotDTO.getDurationMinutes());
 
         User doctor;
         if (userRepository.existsByEmail(doctorEmail)) {
@@ -249,23 +249,23 @@ public class TimeSlotService {
     }
 
     @Transactional
-    public OccupiedTimeSlot updateOccupiedTimeSlot(TimeSlotDTO occupiedTimeSlotDTO, String doctorEmail) throws OverlappingTimeSlotException {
-        Optional<OccupiedTimeSlot> optionalOccupiedTimeSlot = occupiedTimeSlotRepository.findById(occupiedTimeSlotDTO.getId());
+    public OccupiedTimeSlot updateOccupiedTimeSlot(TimeSlotDTO occupiedOldTimeSlotDTO, String doctorEmail) throws OverlappingTimeSlotException {
+        Optional<OccupiedTimeSlot> optionalOccupiedTimeSlot = occupiedTimeSlotRepository.findById(occupiedOldTimeSlotDTO.getId());
         if (optionalOccupiedTimeSlot.isEmpty()) throw new RuntimeException("Invalid occupied time slot id");
         OccupiedTimeSlot occupiedTimeSlot = optionalOccupiedTimeSlot.get();
 
-        if (this.isTimeSlotOverlapping(occupiedTimeSlot, occupiedTimeSlotDTO)) throw new OverlappingTimeSlotException("OccupiedTimeSlot is overlapping with another existing appointment");
+        if (this.isTimeSlotOverlapping(occupiedTimeSlot, occupiedOldTimeSlotDTO)) throw new OverlappingTimeSlotException("OccupiedTimeSlot is overlapping with another existing appointment");
 
 
         if (!Objects.equals(occupiedTimeSlot.getDoctor().getEmail(), doctorEmail))
             throw new RuntimeException("TimeSlot doesn't belong to this Doctor");
 
-        if (occupiedTimeSlotDTO.getDescription() != null)
-            occupiedTimeSlot.setDescription(occupiedTimeSlotDTO.getDescription());
-        if (occupiedTimeSlotDTO.getStartTime() != null)
-            occupiedTimeSlot.setStartTime(occupiedTimeSlotDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime());
-        if (occupiedTimeSlotDTO.getDurationMinutes() != null)
-            occupiedTimeSlot.setDurationMinutes(occupiedTimeSlotDTO.getDurationMinutes());
+        if (occupiedOldTimeSlotDTO.getDescription() != null)
+            occupiedTimeSlot.setDescription(occupiedOldTimeSlotDTO.getDescription());
+        if (occupiedOldTimeSlotDTO.getStartTime() != null)
+            occupiedTimeSlot.setStartTime(occupiedOldTimeSlotDTO.getStartTime());
+        if (occupiedOldTimeSlotDTO.getDurationMinutes() != null)
+            occupiedTimeSlot.setDurationMinutes(occupiedOldTimeSlotDTO.getDurationMinutes());
 
 
         return occupiedTimeSlot;
@@ -350,7 +350,7 @@ public class TimeSlotService {
         if (updatedAppointmentDTO.getStartTime() == null) {
             startTime = appointment.getStartTime();
         } else {
-            startTime = updatedAppointmentDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime();
+            startTime = updatedAppointmentDTO.getStartTime();
         }
 
         if (updatedAppointmentDTO.getDurationMinutes() == null) {
@@ -359,22 +359,22 @@ public class TimeSlotService {
             endTime = startTime.plusMinutes(updatedAppointmentDTO.getDurationMinutes());
         }
 
-        if (updatedAppointmentDTO.getOfficeID() == null) {
+        if (updatedAppointmentDTO.getOffice().getId() == null) {
             officeId = appointment.getOffice().getId();
         } else {
-            officeId = updatedAppointmentDTO.getOfficeID();
+            officeId = updatedAppointmentDTO.getOffice().getId();
         }
 
-        if (updatedAppointmentDTO.getDoctorID() == null) {
+        if (updatedAppointmentDTO.getDoctor().getId() == null) {
             doctorId = appointment.getDoctor().getId();
         } else {
-            doctorId = updatedAppointmentDTO.getDoctorID();
+            doctorId = updatedAppointmentDTO.getDoctor().getId();
         }
 
-        if (updatedAppointmentDTO.getPatientID() == null) {
+        if (updatedAppointmentDTO.getPatient().getId() == null) {
             patientId = appointment.getPatient().getId();
         } else {
-            patientId = updatedAppointmentDTO.getPatientID();
+            patientId = updatedAppointmentDTO.getPatient().getId();
         }
 
 
@@ -398,27 +398,27 @@ public class TimeSlotService {
         return numberOverlappingAppointments != 0;
     }
 
-    private Boolean isTimeSlotOverlapping(OccupiedTimeSlot occupiedTimeSlot, TimeSlotDTO updatedOccupiedTimeSlotDTO) {
+    private Boolean isTimeSlotOverlapping(OccupiedTimeSlot occupiedTimeSlot, TimeSlotDTO updatedOccupiedOldTimeSlotDTO) {
         LocalDateTime startTime;
         LocalDateTime endTime;
         Long doctorId;
 
-        if (updatedOccupiedTimeSlotDTO.getStartTime() == null) {
+        if (updatedOccupiedOldTimeSlotDTO.getStartTime() == null) {
             startTime = occupiedTimeSlot.getStartTime();
         } else {
-            startTime = updatedOccupiedTimeSlotDTO.getStartTime().toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime();
+            startTime = updatedOccupiedOldTimeSlotDTO.getStartTime();
         }
 
-        if (updatedOccupiedTimeSlotDTO.getDurationMinutes() == null) {
+        if (updatedOccupiedOldTimeSlotDTO.getDurationMinutes() == null) {
             endTime = startTime.plusMinutes(occupiedTimeSlot.getDurationMinutes());
         } else {
-            endTime = startTime.plusMinutes(updatedOccupiedTimeSlotDTO.getDurationMinutes());
+            endTime = startTime.plusMinutes(updatedOccupiedOldTimeSlotDTO.getDurationMinutes());
         }
 
-        if (updatedOccupiedTimeSlotDTO.getDoctorID() == null) {
+        if (updatedOccupiedOldTimeSlotDTO.getDoctor().getId() == null) {
             doctorId = occupiedTimeSlot.getDoctor().getId();
         } else {
-            doctorId = updatedOccupiedTimeSlotDTO.getDoctorID();
+            doctorId = updatedOccupiedOldTimeSlotDTO.getDoctor().getId();
         }
 
 

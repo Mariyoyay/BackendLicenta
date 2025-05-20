@@ -6,6 +6,8 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 
+import static org.example.backend.utils.TimeSlotTypeNames.OCCUPIED;
+
 
 @Data
 @Entity
@@ -42,6 +44,6 @@ public class OccupiedTimeSlot implements TimeSlot {
 
     @Override
     public String getType() {
-        return "OCCUPIED";
+        return OCCUPIED;
     }
 }

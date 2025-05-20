@@ -1,6 +1,7 @@
 package org.example.backend.controller;
 
 import org.example.backend.DTO.RegisterRequestDTO;
+import org.example.backend.DTO.UserDTO;
 import org.example.backend.model.User;
 import org.example.backend.service.AuthenticationService;
 import org.example.backend.service.UserService;
@@ -24,19 +25,19 @@ public class UserController {
     }
 
     @GetMapping("/get/all")
-    public ResponseEntity<List<User>> getUsers() {
-        return ResponseEntity.ok(userService.findAll());
+    public ResponseEntity<?> getUsers() {
+        return ResponseEntity.ok(userService.findAll().stream().map(UserDTO::new).toList());
     }
 
     @GetMapping("get/by_role/{role}")
-    public ResponseEntity<List<User>> getUsersByRole(@PathVariable("role") String role) {
-        return ResponseEntity.ok(userService.getUsersByRole(role));
+    public ResponseEntity<?> getUsersByRole(@PathVariable("role") String role) {
+        return ResponseEntity.ok(userService.getUsersByRole(role).stream().map(UserDTO::new).toList());
     }
 
     @GetMapping("/user/{username}")
-    public ResponseEntity<User> getUser(@PathVariable("username") String username) {
+    public ResponseEntity<?> getUser(@PathVariable("username") String username) {
         User user = userService.getUserByEmail(username);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(new UserDTO(user));
     }
 
     @GetMapping("/myself")
@@ -48,7 +49,7 @@ public class UserController {
 
             User user = userService.getUserByEmail(userEmail);
 
-            return ResponseEntity.ok(user);
+            return ResponseEntity.ok(new UserDTO(user));
         }
 
         return ResponseEntity.badRequest().body("No authentication found");
@@ -63,20 +64,20 @@ public class UserController {
 
             User doctor = userService.setDoctorColor(doctorEmail, color);
 
-            return ResponseEntity.ok(doctor);
+            return ResponseEntity.ok(new UserDTO(doctor));
         }
 
         return ResponseEntity.badRequest().body("No authentication found");
     }
 
-    @GetMapping("/public_resource")
-    public String getPublicResource() {return "You are accessing the Public Resource";}
+//    @GetMapping("/public_resource")
+//    public String getPublicResource() {return "You are accessing the Public Resource";}
 
 
     @PostMapping("manage/add")
-    public ResponseEntity<User> addUser(@RequestBody RegisterRequestDTO newUser) {
+    public ResponseEntity<?> addUser(@RequestBody RegisterRequestDTO newUser) {
         User addedUser = authenticationService.registerByEmployee(newUser);
-        return ResponseEntity.ok(addedUser);
+        return ResponseEntity.ok(new UserDTO(addedUser));
     }
 
     // ADMIN SPECIFIC ACTIONS
@@ -89,7 +90,7 @@ public class UserController {
 
         User savedUser = userService.addRolesToUser(email, roles);
 
-        return ResponseEntity.ok(savedUser);
+        return ResponseEntity.ok(new UserDTO(savedUser));
     }
 
     @DeleteMapping("/roles/manage/{username}/remove")
@@ -100,6 +101,6 @@ public class UserController {
 
         User savedUser = userService.deleteRolesFromUser(email, roles);
 
-        return ResponseEntity.ok(savedUser);
+        return ResponseEntity.ok(new UserDTO(savedUser));
     }
 }

@@ -5,6 +5,8 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+import static org.example.backend.utils.TimeSlotTypeNames.APPOINTMENT;
+
 @Data
 @Entity
 @Table(name = "appointments")
@@ -51,6 +53,6 @@ public class Appointment implements TimeSlot{
 
     @Override
     public String getType() {
-        return "APPOINTMENT";
+        return APPOINTMENT;
     }
 }

@@ -36,7 +36,7 @@ public class TimeSlotController {
 
             Appointment addedAppointment = timeSlotService.scheduleAppointment(appointmentDTO, patientEmail);
 
-            return ResponseEntity.ok(addedAppointment);
+            return ResponseEntity.ok(new TimeSlotDTO(addedAppointment));
         }
 
         return ResponseEntity.badRequest().body("No authentication found");
@@ -54,7 +54,7 @@ public class TimeSlotController {
 
             Appointment canceledAppointment = timeSlotService.cancelAppointment(appointmentId, editorEmail);
 
-            return ResponseEntity.ok(canceledAppointment);
+            return ResponseEntity.ok(new TimeSlotDTO(canceledAppointment));
         }
 
         return ResponseEntity.badRequest().body("No authentication found");
@@ -75,7 +75,7 @@ public class TimeSlotController {
                 return ResponseEntity.badRequest().body(e.getMessage());
             }
 
-            return ResponseEntity.ok(addedAppointment);
+            return ResponseEntity.ok(new TimeSlotDTO(addedAppointment));
         }
 
         return ResponseEntity.badRequest().body("No authentication found");
@@ -97,7 +97,7 @@ public class TimeSlotController {
                 return ResponseEntity.badRequest().body(e.getMessage());
             }
 
-            return ResponseEntity.ok(editedAppointment);
+            return ResponseEntity.ok(new TimeSlotDTO(editedAppointment));
         }
 
         return ResponseEntity.badRequest().body("No authentication found");
@@ -114,14 +114,14 @@ public class TimeSlotController {
 
             Appointment appointment = timeSlotService.deleteAppointment(appointmentID, editorEmail);
 
-            return ResponseEntity.ok(appointment);
+            return ResponseEntity.ok(new TimeSlotDTO(appointment));
         }
 
         return ResponseEntity.badRequest().body("No authentication found");
     }
 
     @PostMapping("/occupied/add")
-    public ResponseEntity<?> addOccupiedTimeSlot(@RequestBody TimeSlotDTO occupiedTimeSlotDTO) {
+    public ResponseEntity<?> addOccupiedTimeSlot(@RequestBody TimeSlotDTO occupiedOldTimeSlotDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && authentication.isAuthenticated()) {
@@ -130,19 +130,19 @@ public class TimeSlotController {
             OccupiedTimeSlot occupiedTimeSlot;
 
             try {
-                occupiedTimeSlot = timeSlotService.addOccupiedTimeSlot(occupiedTimeSlotDTO, doctorEmail);
+                occupiedTimeSlot = timeSlotService.addOccupiedTimeSlot(occupiedOldTimeSlotDTO, doctorEmail);
             } catch (OverlappingTimeSlotException e) {
                 return ResponseEntity.badRequest().body(e.getMessage());
             }
 
-            return ResponseEntity.ok(occupiedTimeSlot);
+            return ResponseEntity.ok(new TimeSlotDTO(occupiedTimeSlot));
         }
 
         return ResponseEntity.badRequest().body("No authentication found");
     }
 
     @PostMapping("/occupied/update")
-    public ResponseEntity<?> updateOccupiedTimeSlot(@RequestBody TimeSlotDTO occupiedTimeSlotDTO) {
+    public ResponseEntity<?> updateOccupiedTimeSlot(@RequestBody TimeSlotDTO occupiedOldTimeSlotDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && authentication.isAuthenticated()) {
@@ -150,20 +150,20 @@ public class TimeSlotController {
 
             OccupiedTimeSlot occupiedTimeSlot = null;
             try {
-                occupiedTimeSlot = timeSlotService.updateOccupiedTimeSlot(occupiedTimeSlotDTO, doctorEmail);
+                occupiedTimeSlot = timeSlotService.updateOccupiedTimeSlot(occupiedOldTimeSlotDTO, doctorEmail);
             } catch (OverlappingTimeSlotException e) {
                 return ResponseEntity.badRequest().body(e.getMessage());
             }
 
-            return ResponseEntity.ok(occupiedTimeSlot);
+            return ResponseEntity.ok(new TimeSlotDTO(occupiedTimeSlot));
         }
 
         return ResponseEntity.badRequest().body("No authentication found");
     }
 
     @DeleteMapping("/occupied/delete")
-    public ResponseEntity<?> deleteOccupiedTimeSlot(@RequestBody TimeSlotDTO occupiedTimeSlotDTO) {
-        Long occupiedTimeSlotId = occupiedTimeSlotDTO.getId();
+    public ResponseEntity<?> deleteOccupiedTimeSlot(@RequestBody TimeSlotDTO occupiedOldTimeSlotDTO) {
+        Long occupiedTimeSlotId = occupiedOldTimeSlotDTO.getId();
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -172,7 +172,7 @@ public class TimeSlotController {
 
             OccupiedTimeSlot occupiedTimeSlot = timeSlotService.deleteOccupiedTimeSlot(occupiedTimeSlotId, doctorEmail);
 
-            return ResponseEntity.ok(occupiedTimeSlot);
+            return ResponseEntity.ok(new TimeSlotDTO(occupiedTimeSlot));
         }
 
         return ResponseEntity.badRequest().body("No authentication found");
@@ -184,7 +184,7 @@ public class TimeSlotController {
 
         List<TimeSlot> dayActivitiesList = timeSlotService.getDayActivitiesForDoctor(doctorEmail, date);
 
-        return ResponseEntity.ok(dayActivitiesList);
+        return ResponseEntity.ok(dayActivitiesList.stream().map(TimeSlotDTO::new).toList());
     }
 
     @GetMapping ("/day_schedule/office/{office_id}")
@@ -192,7 +192,7 @@ public class TimeSlotController {
 
         List<TimeSlot> dayActivitiesList = timeSlotService.getDayActivitiesForOffice(officeId, date);
 
-        return ResponseEntity.ok(dayActivitiesList);
+        return ResponseEntity.ok(dayActivitiesList.stream().map(TimeSlotDTO::new).toList());
     }
 }
 
